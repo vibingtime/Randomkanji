@@ -27,6 +27,19 @@ used in conformance with the group's
 KANJIDIC2 is licensed under
 [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/).
 
+## Word meanings — JMdict
+
+The English gloss shown under each sentence, and the fallback vocabulary for
+kanji with no corpus sentence, come from **JMdict**, also the property of the
+Electronic Dictionary Research and Development Group, via
+[jmdict-simplified](https://github.com/scriptin/jmdict-simplified)'s JSON
+distribution.
+
+JMdict is licensed under
+[Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/).
+Glosses are taken from the first non-archaic sense of the matching entry, at
+most two per card, and shortened as described in the README.
+
 ## Word segmentation and readings — IPADIC via kuromoji
 
 Furigana is generated at build time by [kuromoji](https://github.com/takuyaa/kuromoji.js)
@@ -35,9 +48,6 @@ boundaries and readings that the furigana is fitted from. IPADIC is
 copyright 2003 Nara Institute of Science and Technology and is distributed
 under its own BSD-style licence, reproduced in
 `node_modules/kuromoji/NOTICE.md` when kuromoji is installed.
-
-Fallback vocabulary for the kanji with no corpus sentence is taken from the
-same dictionary.
 
 ## Changes made
 

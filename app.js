@@ -12,6 +12,7 @@ const el = {
   hint: document.getElementById('hint'),
   back: document.getElementById('back'),
   sentence: document.getElementById('sentence'),
+  gloss: document.getElementById('gloss'),
   grade: document.getElementById('grade'),
   status: document.getElementById('status'),
 };
@@ -117,7 +118,7 @@ function rubyNode(text, reading) {
 }
 
 function renderSentence(target) {
-  const [text, ruby, wordStart, wordLen] = cards[current];
+  const [text, ruby, wordStart, wordLen, gloss] = cards[current];
   const chars = Array.from(text);
   const byStart = new Map(ruby.map((r) => [r[0], r]));
 
@@ -148,6 +149,7 @@ function renderSentence(target) {
   }
 
   el.sentence.replaceChildren(out);
+  el.gloss.textContent = gloss;
 }
 
 function render() {

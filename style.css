@@ -111,6 +111,14 @@ rt {
   letter-spacing: -0.02em;
 }
 
+/* What the underlined word means. The sentence itself stays untranslated. */
+#gloss {
+  margin: 1.1rem 0 0;
+  color: var(--dim);
+  font-size: 0.9375rem;
+  text-wrap: balance;
+}
+
 /* The word the card is testing. */
 .target {
   color: var(--accent);

@@ -4,12 +4,15 @@ A deliberately small flashcard PWA for the 2136 jōyō kanji. One card, two
 buttons, works offline.
 
 The front is the kanji alone. Tap it (or press space) and the back shows **one
-example sentence** using it, with the tested word underlined and furigana over
-the kanji you are not expected to read yet. Grade yourself **Again** or **Got
-it** (keys `1` and `2`) and the next card comes up.
+example sentence** using it, with the tested word underlined, furigana over the
+kanji you are not expected to read yet, and **the meaning of that one word**
+underneath. Grade yourself **Again** or **Got it** (keys `1` and `2`) and the
+next card comes up.
 
-There is no English anywhere on the card, and no meaning or reading list — the
-sentence is the whole answer.
+The sentence itself is never translated. The only English is the gloss for the
+underlined word, which is what makes the card checkable: you can tell whether
+you actually knew the word the kanji forms, not just whether the shape looked
+familiar.
 
 ## Which kanji get furigana
 
@@ -66,7 +69,7 @@ old cache keeps being served.
 ## Rebuilding the deck
 
 `kanji.json` is generated and checked in; you only need this to change what a
-card holds. Three inputs:
+card holds. Four inputs:
 
 ```sh
 # 1. KANJIDIC2 — which kanji are jōyō, the teaching order, and the reading
@@ -80,8 +83,15 @@ npm install kuromoji
 #    from the Japanese side of the OPUS Tatoeba en-ja corpus:
 #    https://opus.nlpl.eu/Tatoeba/  (or https://tatoeba.org/downloads)
 
-node tools/build-deck.mjs package/KANJIS.json Tatoeba.en-ja.ja
+# 4. JMdict as JSON — the word glosses, and the fallback word for any kanji the
+#    corpus never uses. Grab jmdict-eng-*.json.zip from the latest release of
+#    https://github.com/scriptin/jmdict-simplified and unzip it.
+
+node --max-old-space-size=4096 tools/build-deck.mjs \
+  package/KANJIS.json Tatoeba.en-ja.ja jmdict-eng-3.6.2.json
 ```
+
+The JMdict JSON is ~118 MB once unzipped, hence the heap flag.
 
 The builder shortlists eight candidate sentences per kanji, ranked by length
 and by how early the surrounding kanji appear in the deck, then takes the first
@@ -90,12 +100,21 @@ one that passes a quality gate:
 - every generated single-kanji reading must be one KANJIDIC2 recognises, after
   allowing for rendaku and gemination;
 - the tested kanji must end up with a reading;
+- the tested word must have a JMdict gloss, otherwise there is nothing to check
+  yourself against — this also quietly rejects sentences whose target turns out
+  to be a place or person name (成田空港, 佐藤), since those are not dictionary
+  words;
 - sentences containing a person's name written in kanji are rejected, because
   the tokeniser reaches for name-only readings there (隆 → たかし);
 - ambiguous alignments produce no furigana rather than a guess.
 
-Roughly 2060 kanji get a real sentence. The rest are genuinely absent from the
-corpus, and fall back to the most common dictionary word using that kanji.
+Roughly 2050 kanji get a real sentence. The rest are genuinely absent from the
+corpus, and fall back to the most ordinary JMdict word using that kanji — at
+least two characters, kanji and kana only, common entries preferred.
+
+Glosses are capped at 45 characters. JMdict occasionally carries a field-guide
+entry ("crane (any bird of the family Gruidae, esp. ...)"); the builder drops
+the parenthetical detail before it resorts to truncating.
 
 ### A caveat on generated furigana
 
@@ -109,16 +128,17 @@ be contextually off.
 
 Writing these down because each will sound reasonable in three weeks:
 
-English translations · multiple example sentences · stroke order · audio ·
-radical breakdowns · multiple choice · accounts or sync · streaks · statistics ·
-a settings screen
+sentence translations · multiple example sentences · kanji meaning lists ·
+reading lists · stroke order · audio · radical breakdowns · multiple choice ·
+accounts or sync · streaks · statistics · a settings screen
 
 The whole app is `app.js`, and it is about 250 lines. If it passes 350,
 something got in that should not have.
 
 ## Credits and licensing
 
-Sentences come from Tatoeba (**CC BY 2.0 FR**), the kanji list and readings
-from KANJIDIC2 (**CC BY-SA 4.0**), and the generated furigana from IPADIC via
-kuromoji. See [CREDITS.md](CREDITS.md) — `kanji.json` combines all three and
-carries their terms.
+Sentences come from Tatoeba (**CC BY 2.0 FR**); the kanji list and readings
+from KANJIDIC2 and the word glosses from JMdict, both EDRDG and both
+**CC BY-SA 4.0**; the generated furigana from IPADIC via kuromoji. See
+[CREDITS.md](CREDITS.md) — `kanji.json` combines all of them and carries their
+terms.

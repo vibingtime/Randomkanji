@@ -1,26 +1,28 @@
 #!/usr/bin/env node
-// Builds kanji.json: for each jouyou kanji, one example sentence plus the
-// furigana ranges needed to read it.
+// Builds kanji.json: for each jouyou kanji, one example sentence, the furigana
+// ranges needed to read it, and an English gloss for the word being tested.
 //
 // Inputs (see README for how to fetch each):
 //   1. KANJIDIC2 as JSON  - which kanji are jouyou, the teaching order, and the
 //                           reading list used to sanity-check generated furigana
 //   2. Tatoeba ja corpus  - the example sentences
-//   3. kuromoji + IPADIC  - word segmentation and readings, from node_modules
+//   3. JMdict as JSON     - the gloss for the tested word, and the fallback word
+//                           for kanji the corpus never uses
+//   4. kuromoji + IPADIC  - word segmentation and readings, from node_modules
 //
-//   node tools/build-deck.mjs <KANJIS.json> <Tatoeba.en-ja.ja>
+//   node --max-old-space-size=4096 tools/build-deck.mjs \
+//     <KANJIS.json> <Tatoeba.en-ja.ja> <jmdict-eng.json>
 //
 // No part of this ships to the browser.
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { gunzipSync } from 'node:zlib';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 
-const [kanjidicPath, corpusPath] = process.argv.slice(2);
-if (!kanjidicPath || !corpusPath) {
-  console.error('usage: node tools/build-deck.mjs <KANJIS.json> <Tatoeba.en-ja.ja>');
+const [kanjidicPath, corpusPath, jmdictPath] = process.argv.slice(2);
+if (!kanjidicPath || !corpusPath || !jmdictPath) {
+  console.error('usage: node tools/build-deck.mjs <KANJIS.json> <Tatoeba.en-ja.ja> <jmdict-eng.json>');
   process.exit(1);
 }
 
@@ -213,43 +215,86 @@ for (const list of shortlist.values()) {
   list.length = Math.min(list.length, CANDIDATES);
 }
 
-// ---- 3. IPADIC word fallback for kanji with no usable sentence ------------
+// ---- 3. JMdict: word glosses, and a word for kanji the corpus never uses ---
 
 const dictDir = require.resolve('kuromoji/package.json').replace(/package\.json$/, 'dict');
 
-function ipadicWords(wanted) {
-  const tid = gunzipSync(readFileSync(dictDir + '/tid.dat.gz'));
-  const pos = gunzipSync(readFileSync(dictDir + '/tid_pos.dat.gz'));
-  const strAt = (off) => {
-    let e = off;
-    while (e < pos.length && pos[e] !== 0) e++;
-    return pos.toString('utf8', off, e);
-  };
-  const found = new Map();
-  for (let i = 0; i + 10 <= tid.length; i += 10) {
-    const posId = tid[i + 6] | (tid[i + 7] << 8) | (tid[i + 8] << 16) | (tid[i + 9] << 24);
-    const s = strAt(posId);
-    if (!s) continue;
-    let cost = (tid[i + 5] << 8) + tid[i + 4];
-    if (cost > 32767) cost -= 65536;
-    const f = s.split(',');
-    // Proper nouns give things like "リサ堀内"; inflected forms give stems.
-    if (f[2] === '固有名詞') continue;
-    if ((f[1] === '動詞' || f[1] === '形容詞') && f[6] !== '基本形') continue;
-    if (f[1] === '助詞' || f[1] === '助動詞' || f[1] === '記号') continue;
-    const surface = f[0];
-    const reading = f[8];
-    if (!reading || reading === '*') continue;
-    const n = Array.from(surface).length;
-    if (n < 2 || n > 4) continue;
-    for (const ch of Array.from(surface)) {
-      const key = MODERNISE[ch] ?? ch;
-      if (!wanted.has(key)) continue;
-      const cur = found.get(key);
-      if (!cur || cost < cur.cost) found.set(key, { text: surface, reading, cost });
+// Senses flagged archaic, obsolete or rare are not what the learner should be
+// told the word in front of them means.
+const SKIP_SENSE = new Set(['arch', 'obs', 'rare', 'obsc']);
+
+const byHeadword = new Map(); // written form -> entries
+const byKanjiChar = new Map(); // one kanji -> short headwords containing it
+
+for (const w of JSON.parse(readFileSync(jmdictPath, 'utf8')).words) {
+  const senses = w.sense.filter(
+    (s) => !s.misc.some((m) => SKIP_SENSE.has(m)) && s.gloss.some((g) => g.lang === 'eng')
+  );
+  if (!senses.length) continue;
+  const kana = w.kana.map((k) => k.text);
+  for (const k of w.kanji) {
+    const entry = { text: k.text, common: k.common, kana, senses };
+    if (!byHeadword.has(k.text)) byHeadword.set(k.text, []);
+    byHeadword.get(k.text).push(entry);
+    if (Array.from(k.text).length > 4) continue;
+    for (const ch of Array.from(k.text)) {
+      if (!isKanji(ch)) continue;
+      if (!byKanjiChar.has(ch)) byKanjiChar.set(ch, []);
+      byKanjiChar.get(ch).push(entry);
     }
   }
-  return found;
+}
+
+// Two glosses at most, and short enough to read at a glance. JMdict sometimes
+// carries a whole field guide entry ("crane (any bird of the family Gruidae,
+// esp. ...)"), so drop the parenthetical detail before resorting to a cut.
+const GLOSS_MAX = 45;
+
+function glossOf(entry) {
+  const texts = entry.senses[0].gloss.filter((g) => g.lang === 'eng').map((g) => g.text);
+  const pair = texts.slice(0, 2).join(', ');
+  if (pair.length <= GLOSS_MAX) return pair;
+  if (texts[0].length <= GLOSS_MAX) return texts[0];
+  const stripped = texts[0].replace(/\s*\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
+  if (stripped && stripped.length <= GLOSS_MAX) return stripped;
+  return (stripped || texts[0]).slice(0, GLOSS_MAX - 1).trimEnd() + '\u2026';
+}
+
+// Prefer the entry whose reading matches how the word is actually read here,
+// then the one marked common: 生 alone has a dozen unrelated headwords.
+function lookupGloss(forms, reading) {
+  const want = reading && reading !== '*' ? toHiragana(reading) : null;
+  for (const form of forms) {
+    const entries = byHeadword.get(form);
+    if (!entries) continue;
+    const ranked = entries.slice().sort((a, b) => {
+      const ar = want && a.kana.some((k) => toHiragana(k) === want) ? 1 : 0;
+      const br = want && b.kana.some((k) => toHiragana(k) === want) ? 1 : 0;
+      return br - ar || Number(b.common) - Number(a.common);
+    });
+    return glossOf(ranked[0]);
+  }
+  return null;
+}
+
+// For a kanji with no usable sentence: the most ordinary short word using it.
+// At least two characters, so the card still shows the kanji doing something
+// rather than restating itself.
+// Kanji and kana only: JMdict headwords like "２桁" or "Ｔシャツ" are real
+// words but make poor cards, and a digit cannot carry furigana.
+const WORD_CHARS =
+  /^[\u3040-\u30ff\u3005\u30fc\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\u{20000}-\u{2a6df}]+$/u;
+
+function fallbackWord(kanji) {
+  const entries = (byKanjiChar.get(kanji) ?? [])
+    .filter((e) => Array.from(e.text).length >= 2 && WORD_CHARS.test(e.text));
+  if (!entries.length) return null;
+  const best = entries.slice().sort((a, b) =>
+    Number(b.common) - Number(a.common) ||
+    Array.from(a.text).length - Array.from(b.text).length ||
+    a.text.localeCompare(b.text)
+  )[0];
+  return { text: best.text, reading: best.kana[0], gloss: glossOf(best) };
 }
 
 // ---- 4. turn a source string into a card ----------------------------------
@@ -268,6 +313,8 @@ function makeCard(source, literal) {
   let wordStart = -1;
   let wordLen = 0;
   let namedKanji = false;
+  let targetForms = [];
+  let targetReading = null;
 
   for (const t of tokens) {
     const surface = t.surface_form;
@@ -278,6 +325,11 @@ function makeCard(source, literal) {
     if (wordStart === -1 && Array.from(surface).some((c) => (MODERNISE[c] ?? c) === literal)) {
       wordStart = offset;
       wordLen = n;
+      // JMdict is keyed on the dictionary form, so read んだ back to 読む.
+      targetForms = t.basic_form && t.basic_form !== '*' && t.basic_form !== surface
+        ? [t.basic_form, surface]
+        : [surface];
+      targetReading = t.reading;
     }
     for (const [at, len, reading] of fitFurigana(surface, t.reading)) {
       ruby.push([offset + at, len, reading]);
@@ -306,10 +358,13 @@ function makeCard(source, literal) {
   // The card is the answer side, so the kanji being tested must always be read.
   const targetRead = wordStart !== -1 && covered.has(chars.findIndex((c) => c === literal));
 
+  const gloss = lookupGloss(targetForms, targetReading);
+
   return {
-    card: [text, kept, wordStart, wordLen],
-    clean: dropped === 0 && bare === 0 && targetRead && !namedKanji,
+    card: [text, kept, wordStart, wordLen, gloss ?? ''],
+    clean: dropped === 0 && bare === 0 && targetRead && !namedKanji && !!gloss,
     targetRead,
+    gloss,
     dropped,
     bare,
   };
@@ -319,55 +374,52 @@ function makeCard(source, literal) {
 
 const stats = { sentence: 0, word: 0, compromised: 0, bare: 0 };
 const cards = [];
-const needWord = [];
 
 for (const literal of jouyou) {
   let chosen = null;
-  let firstUsable = null;
+  let usable = null;
   for (const s of shortlist.get(literal) ?? []) {
     const built = makeCard(s.text, literal);
     if (built.clean) { chosen = built; break; }
-    if (!firstUsable && built.targetRead && built.dropped === 0) firstUsable = built;
+    // A sentence is still worth using if the only thing missing is full
+    // furigana coverage elsewhere - but never if the tested word has no gloss,
+    // because then there is nothing to check yourself against.
+    if (!usable && built.targetRead && built.dropped === 0 && built.gloss) usable = built;
   }
-  chosen ??= firstUsable;
+  chosen ??= usable;
+
   if (chosen) {
     stats.sentence++;
     if (!chosen.clean) { stats.compromised++; stats.bare += chosen.bare; }
     cards.push(chosen.card);
-  } else {
-    cards.push(null);
-    needWord.push(literal);
+    continue;
   }
-}
 
-// Anything with no usable sentence falls back to a dictionary word.
-if (needWord.length) {
-  const words = ipadicWords(new Set(needWord));
-  for (let i = 0; i < jouyou.length; i++) {
-    if (cards[i]) continue;
-    const w = words.get(jouyou[i]);
-    if (!w) {
-      console.error(`no sentence and no word for ${jouyou[i]}`);
-      process.exit(1);
-    }
-    const text = Array.from(w.text).map((c) => MODERNISE[c] ?? c).join('');
-    const ruby = fitFurigana(w.text, w.reading);
-    cards[i] = [text, ruby.length ? ruby : [[0, Array.from(text).length, toHiragana(w.reading)]],
-                0, Array.from(text).length];
-    stats.word++;
+  // No usable sentence: show the most ordinary word using this kanji instead.
+  const w = fallbackWord(literal);
+  if (!w) {
+    console.error(`no sentence and no word for ${literal}`);
+    process.exit(1);
   }
+  const text = Array.from(w.text).map((c) => MODERNISE[c] ?? c).join('');
+  const fitted = fitFurigana(w.text, w.reading);
+  const ruby = fitted.length ? fitted : [[0, Array.from(text).length, toHiragana(w.reading)]];
+  cards.push([text, ruby, 0, Array.from(text).length, w.gloss]);
+  stats.word++;
 }
 
 const deck = {
-  v: 2,
-  source: 'Tatoeba (CC BY 2.0 FR), KANJIDIC2 (CC BY-SA 4.0), IPADIC readings',
+  v: 3,
+  source: 'Tatoeba (CC BY 2.0 FR), KANJIDIC2 and JMdict (CC BY-SA 4.0), IPADIC readings',
   kanji: jouyou.join(''),
   cards,
 };
 writeFileSync('kanji.json', JSON.stringify(deck) + '\n');
 
+const missing = cards.filter((c) => !c[4]).length;
 const kb = (Buffer.byteLength(JSON.stringify(deck)) / 1024).toFixed(1);
 console.log(`wrote kanji.json: ${cards.length} cards, ${kb} KB`);
 console.log(`  from a sentence:            ${stats.sentence}`);
 console.log(`  from a dictionary word:     ${stats.word}`);
 console.log(`  sentences with a gap:       ${stats.compromised} (${stats.bare} kanji left unread)`);
+console.log(`  cards with no gloss:        ${missing}`);
