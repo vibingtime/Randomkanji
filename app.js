@@ -11,20 +11,17 @@ const el = {
   kanji: document.getElementById('kanji'),
   hint: document.getElementById('hint'),
   back: document.getElementById('back'),
-  meaning: document.getElementById('meaning'),
-  onRow: document.getElementById('on-row'),
-  kunRow: document.getElementById('kun-row'),
-  on: document.getElementById('on'),
-  kun: document.getElementById('kun'),
+  sentence: document.getElementById('sentence'),
   grade: document.getElementById('grade'),
   status: document.getElementById('status'),
 };
 
-let deck = [];
-let position = new Map(); // literal -> index into deck
+let kanji = []; // the deck, in teaching order
+let cards = []; // [text, ruby, wordStart, wordLen] per kanji
+let position = new Map(); // kanji -> index into the deck
 let state = null;
 let queue = []; // deck indices still to see this session
-let current = null; // deck index currently on screen
+let current = null;
 let revealed = false;
 
 // ---- day numbers ----------------------------------------------------------
@@ -82,13 +79,13 @@ function buildQueue() {
   for (const [literal, [, dueAt]] of Object.entries(state.box)) {
     if (dueAt <= now && position.has(literal)) due.push(position.get(literal));
   }
-  // Reviews are random; only the introduction of new cards follows grade order.
+  // Reviews are random; only the introduction of new cards follows the deck order.
   return shuffle(due);
 }
 
 function nextCard() {
   if (queue.length) return queue.shift();
-  if (state.newToday < NEW_PER_DAY && state.next < deck.length) {
+  if (state.newToday < NEW_PER_DAY && state.next < cards.length) {
     state.newToday++;
     return state.next++;
   }
@@ -97,35 +94,66 @@ function nextCard() {
 
 // ---- rendering ------------------------------------------------------------
 
-// KANJIDIC2 marks the okurigana boundary with a dot ("い.きる") and affix
-// position with a hyphen ("なま-"). Dim the okurigana, drop the hyphens.
-function readingNode(raw) {
-  const span = document.createElement('span');
-  const text = raw.replace(/-/g, '');
-  const dot = text.indexOf('.');
-  if (dot === -1) {
-    span.textContent = text;
-    return span;
+// Furigana is for kanji you cannot be expected to read yet: anything the deck
+// has not introduced, anything outside the deck entirely, and always the kanji
+// this card is testing - the sentence is the answer side, so its reading is
+// the thing you came for.
+function needsFurigana(segment, target) {
+  for (const ch of segment) {
+    if (ch === target) return true;
+    const at = position.get(ch);
+    if (at === undefined || at >= state.next) return true;
   }
-  span.append(text.slice(0, dot));
-  const oku = document.createElement('span');
-  oku.className = 'oku';
-  oku.textContent = text.slice(dot + 1);
-  span.append(oku);
-  return span;
+  return false;
 }
 
-function fillReadings(target, row, list) {
-  target.replaceChildren(...list.map(readingNode));
-  row.hidden = list.length === 0;
+function rubyNode(text, reading) {
+  const node = document.createElement('ruby');
+  node.append(text);
+  const rt = document.createElement('rt');
+  rt.textContent = reading;
+  node.append(rt);
+  return node;
+}
+
+function renderSentence(target) {
+  const [text, ruby, wordStart, wordLen] = cards[current];
+  const chars = Array.from(text);
+  const byStart = new Map(ruby.map((r) => [r[0], r]));
+
+  const out = document.createDocumentFragment();
+  let sink = out; // where characters go; swapped for the target word's span
+  let i = 0;
+
+  while (i < chars.length) {
+    if (i === wordStart) {
+      const word = document.createElement('span');
+      word.className = 'target';
+      out.append(word);
+      sink = word;
+    }
+
+    const range = byStart.get(i);
+    if (range) {
+      const [, len, reading] = range;
+      const segment = chars.slice(i, i + len).join('');
+      sink.append(needsFurigana(segment, target) ? rubyNode(segment, reading) : segment);
+      i += len;
+    } else {
+      sink.append(chars[i]);
+      i += 1;
+    }
+
+    if (sink !== out && i >= wordStart + wordLen) sink = out;
+  }
+
+  el.sentence.replaceChildren(out);
 }
 
 function render() {
-  const [literal, , on, kun, meanings] = deck[current];
-  el.kanji.textContent = literal;
-  el.meaning.textContent = meanings.join(', ');
-  fillReadings(el.on, el.onRow, on);
-  fillReadings(el.kun, el.kunRow, kun);
+  const target = kanji[current];
+  el.kanji.textContent = target;
+  if (revealed) renderSentence(target);
 
   el.back.hidden = !revealed;
   el.grade.hidden = !revealed;
@@ -140,7 +168,7 @@ function finish() {
   el.card.hidden = true;
   el.grade.hidden = true;
   el.status.textContent =
-    state.next >= deck.length && !Object.keys(state.box).length
+    state.next >= cards.length && !Object.keys(state.box).length
       ? 'Deck complete.'
       : 'Nothing due right now. Come back tomorrow.';
 }
@@ -163,7 +191,7 @@ function reveal() {
 function grade(known) {
   if (current === null || !revealed) return;
 
-  const literal = deck[current][0];
+  const literal = kanji[current];
   const box = known ? Math.min((state.box[literal]?.[0] ?? 1) + 1, INTERVALS.length) : 1;
   state.box[literal] = [box, today() + INTERVALS[box - 1]];
   save();
@@ -205,11 +233,12 @@ async function start() {
     return;
   }
 
-  deck = data.cards;
-  position = new Map(deck.map((c, i) => [c[0], i]));
+  kanji = Array.from(data.kanji);
+  cards = data.cards;
+  position = new Map(kanji.map((k, i) => [k, i]));
 
   load();
-  state.next = Math.min(state.next, deck.length);
+  state.next = Math.min(state.next, cards.length);
   queue = buildQueue();
   advance();
 }
