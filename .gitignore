@@ -1,0 +1,4 @@
+# Artifacts from `npm pack kanjidic2-json` when rebuilding the deck.
+node_modules/
+package/
+*.tgz

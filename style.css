@@ -1,0 +1,171 @@
+:root {
+  --bg: #fbfaf8;
+  --fg: #16150f;
+  --dim: #8a8578;
+  --line: #e2ded4;
+  --btn: #ffffff;
+  /* Japanese faces only, serif first. Never fall through to a Chinese font:
+     under Han unification it draws some kanji with the wrong glyph shape. The
+     lang="ja" attributes in index.html back this up at the shaping level. */
+  --kanji-font: "Hiragino Mincho ProN", "Yu Mincho", YuMincho, "Noto Serif JP",
+                "Source Han Serif JP", IPAexMincho, "Hiragino Kaku Gothic ProN",
+                "Yu Gothic", YuGothic, "Noto Sans JP", IPAGothic, serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14140f;
+    --fg: #f0ece1;
+    --dim: #7c776a;
+    --line: #2c2b24;
+    --btn: #1e1d17;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: max(1.5rem, env(safe-area-inset-top)) 1.5rem
+           max(1.5rem, env(safe-area-inset-bottom));
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  overflow: hidden;
+}
+
+/* ---- card ---- */
+
+#card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  width: 100%;
+  max-width: 34rem;
+  cursor: pointer;
+}
+
+#face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+#kanji {
+  font-family: var(--kanji-font);
+  font-size: clamp(6rem, 34vmin, 13rem);
+  line-height: 1;
+  font-weight: 400;
+}
+
+#hint {
+  margin: 0;
+  color: var(--dim);
+  font-size: 0.8125rem;
+  letter-spacing: 0.06em;
+}
+
+#back {
+  width: 100%;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+
+#meaning {
+  margin: 0 0 1.25rem;
+  font-size: 1.25rem;
+  text-wrap: balance;
+}
+
+/* Shrink-to-fit so a short card's readings centre under the meaning, while a
+   card with many readings still fills the width and wraps. */
+#reading-block {
+  display: inline-block;
+  max-width: 100%;
+  text-align: left;
+}
+
+.reading-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  justify-content: flex-start;
+  padding: 0.3rem 0;
+  text-align: left;
+}
+
+.label {
+  flex: none;
+  width: 2.25rem;
+  color: var(--dim);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.readings {
+  font-family: var(--kanji-font);
+  font-size: 1.125rem;
+  /* All readings, so wrapping matters: 生 has 18 kun'yomi. */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.9rem;
+}
+
+/* Okurigana: the part written in kana outside the kanji. */
+.oku { color: var(--dim); }
+
+/* ---- controls ---- */
+
+#grade {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 34rem;
+}
+
+button {
+  flex: 1;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  background: var(--btn);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+button:active { transform: translateY(1px); }
+
+@media (hover: hover) {
+  button:hover { border-color: var(--dim); }
+}
+
+#status {
+  margin: 0;
+  max-width: 24rem;
+  color: var(--dim);
+  text-align: center;
+  text-wrap: balance;
+}
+
+#status:empty { display: none; }
+
+[hidden] { display: none !important; }

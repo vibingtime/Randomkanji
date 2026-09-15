@@ -1,0 +1,19 @@
+{
+  "name": "Random Kanji",
+  "short_name": "Kanji",
+  "description": "A minimal jouyou kanji flashcard app.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fbfaf8",
+  "theme_color": "#fbfaf8",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

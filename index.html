@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Random Kanji</title>
+<meta name="description" content="A minimal jouyou kanji flashcard app.">
+<meta name="theme-color" content="#fbfaf8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<main id="card" hidden>
+  <div id="face">
+    <div id="kanji" lang="ja"></div>
+    <p id="hint" hidden>tap to reveal</p>
+  </div>
+  <div id="back" hidden>
+    <p id="meaning"></p>
+    <div id="reading-block">
+      <div class="reading-row" id="on-row"><span class="label">on</span><span class="readings" id="on" lang="ja"></span></div>
+      <div class="reading-row" id="kun-row"><span class="label">kun</span><span class="readings" id="kun" lang="ja"></span></div>
+    </div>
+  </div>
+</main>
+
+<div id="grade" hidden>
+  <button id="again" type="button">Again</button>
+  <button id="got" type="button">Got it</button>
+</div>
+
+<p id="status" role="status"></p>
+
+<script src="app.js"></script>
+</body>
+</html>
