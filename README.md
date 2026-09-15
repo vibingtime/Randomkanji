@@ -66,6 +66,41 @@ subpath works without changes.
 When you change any cached file, bump `VERSION` in `sw.js` — otherwise the
 old cache keeps being served.
 
+## Installing it on a phone
+
+A PWA can only be installed over **HTTPS**, so it has to be hosted somewhere —
+a phone cannot install it from a file or from a plain-HTTP server on your local
+network. GitHub Pages is the least effort:
+
+1. **Settings → Pages** in the repo. Under *Build and deployment* pick
+   *Deploy from a branch*, choose this branch and the `/ (root)` folder, save.
+   Note that Pages only works on a **private** repo with a paid GitHub plan —
+   on the free plan the repo has to be public.
+2. Wait a minute, then open `https://<user>.github.io/<repo>/` on the phone.
+3. **Android (Chrome):** menu → *Add to Home screen* / *Install app*.
+   **iPhone (Safari):** Share → *Add to Home Screen*. Use Safari — installing
+   from other iOS browsers is unreliable.
+4. Open it once while online so the service worker caches the deck. After that
+   it runs with no network at all.
+
+It installs as a standalone app: no browser chrome, its own home screen icon,
+and progress kept on the device.
+
+Any other static host works the same way — Cloudflare Pages and Netlify both
+serve private repos on their free tiers, and both accept a drag-and-dropped
+folder if you would rather not connect the repo at all.
+
+### Icons
+
+`apple-touch-icon.png`, `icon-192.png` and `icon-512.png` are generated from
+`icon.svg` and checked in. iOS ignores SVG for the home screen icon, so without
+the PNG an installed app shows a screenshot of the page instead of the mark.
+Regenerate them only if `icon.svg` changes:
+
+```sh
+npm install playwright && node tools/make-icons.mjs
+```
+
 ## Rebuilding the deck
 
 `kanji.json` is generated and checked in; you only need this to change what a

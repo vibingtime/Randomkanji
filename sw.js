@@ -1,7 +1,7 @@
 // Cache-first app shell. Everything here is static, so a plain cache-first
 // strategy is correct; bump VERSION whenever any cached file changes and the
 // new service worker will drop the old cache on activate.
-const VERSION = 'v3';
+const VERSION = 'v4';
 const ASSETS = [
   './',
   'index.html',
@@ -9,6 +9,9 @@ const ASSETS = [
   'app.js',
   'kanji.json',
   'icon.svg',
+  'icon-192.png',
+  'icon-512.png',
+  'apple-touch-icon.png',
   'manifest.webmanifest',
 ];
 
