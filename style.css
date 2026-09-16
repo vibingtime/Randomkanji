@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --bg: #fbfaf8;
   --fg: #16150f;
   --dim: #8a8578;
@@ -15,6 +16,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    color-scheme: dark;
     --bg: #14140f;
     --fg: #f0ece1;
     --dim: #7c776a;
@@ -111,10 +113,22 @@ rt {
   letter-spacing: -0.02em;
 }
 
-/* What the underlined word means. The sentence itself stays untranslated. */
-#gloss {
-  margin: 1.1rem 0 0;
+/* Translation of the whole sentence: context, so it stays quiet. */
+#translation {
+  margin: 0.9rem 0 0;
   color: var(--dim);
+  font-size: 0.875rem;
+  font-style: italic;
+  text-wrap: balance;
+}
+
+#translation:empty { display: none; }
+
+/* What the underlined word means - the answer to the card, so it reads
+   brighter than the translation above it. */
+#gloss {
+  margin: 0.5rem 0 0;
+  color: var(--fg);
   font-size: 0.9375rem;
   text-wrap: balance;
 }
@@ -163,5 +177,111 @@ button:active { transform: translateY(1px); }
 }
 
 #status:empty { display: none; }
+
+/* ---- settings ---- */
+
+#open-settings {
+  position: fixed;
+  top: max(0.5rem, env(safe-area-inset-top));
+  right: max(0.5rem, env(safe-area-inset-right));
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0.6rem;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--dim);
+  opacity: 0.65;
+  z-index: 2;
+}
+
+#open-settings svg { width: 100%; height: 100%; }
+
+@media (hover: hover) {
+  #open-settings:hover { opacity: 1; }
+}
+
+#settings {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  /* Dim rather than tint, so it works in either theme. */
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(6px);
+  overflow-y: auto;
+}
+
+#sheet {
+  width: 100%;
+  max-width: 24rem;
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--btn);
+}
+
+#sheet h2 {
+  margin: 0 0 1.25rem;
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.field input {
+  width: 5.5rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  text-align: right;
+}
+
+.field input:disabled { opacity: 0.4; }
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.check input {
+  flex: none;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0.15rem 0 0;
+  accent-color: var(--accent);
+}
+
+#settings-note {
+  margin: 1.25rem 0 0;
+  color: var(--dim);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+#settings-note:empty { display: none; }
+
+#close-settings {
+  width: 100%;
+  margin-top: 1.25rem;
+}
 
 [hidden] { display: none !important; }

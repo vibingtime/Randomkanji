@@ -9,10 +9,10 @@ kanji you are not expected to read yet, and **the meaning of that one word**
 underneath. Grade yourself **Again** or **Got it** (keys `1` and `2`) and the
 next card comes up.
 
-The sentence itself is never translated. The only English is the gloss for the
-underlined word, which is what makes the card checkable: you can tell whether
-you actually knew the word the kanji forms, not just whether the shape looked
-familiar.
+Under the sentence sit two lines of English: a translation of the whole
+sentence, small and dimmed, and below it the meaning of the underlined word,
+which reads brighter because it is the answer to the card. The translation can
+be switched off in settings if you would rather work without it.
 
 ## Which kanji get furigana
 
@@ -28,6 +28,21 @@ gets progressively harder to read as you work through the deck, which is the
 point. Readings are stored per word, so compounds like 民謡(みんよう) are
 annotated as a unit rather than character by character.
 
+## Settings
+
+The control in the top right opens them. Two things are adjustable:
+
+**New cards per day** — 10 by default. Raising it takes effect immediately: if
+the session had already ended for the day, closing settings resumes it rather
+than making you wait until tomorrow. **No daily limit** introduces new kanji
+until the deck runs out, which at 2136 cards means a single session can hand
+you the entire jōyō set — every one of which then comes back for review.
+
+**Show the English translation** — on by default, per-sentence.
+
+Both live in the same `localStorage` record as your progress, so they survive
+reloads and reinstalls but do not sync between devices.
+
 ## How the scheduling works
 
 Leitner, five boxes. **Got it** moves a card up one box, **Again** drops it
@@ -41,10 +56,16 @@ straight back to box 1.
 | 4   | 7 days |
 | 5   | 21 days |
 
-Cards due for review are served in random order. New cards are *introduced* in
-grade order, though — kyōiku grades 1 through 6, then the remaining jōyō, and
+Cards due for review are served in random order, and reviews are never capped —
+only the introduction of new cards is. New cards are *introduced* in
+grade order — kyōiku grades 1 through 6, then the remaining jōyō, and
 within each grade the most frequent kanji first. So you meet 日 and 一 long
 before 璽 and 鬱, while your reviews stay shuffled. Ten new cards a day.
+
+Note that box 5 is the last box, so mature cards keep returning every 21 days
+rather than graduating. Once the whole deck is mature that settles at roughly
+`2136 ÷ 21 ≈ 100` reviews a day, indefinitely. Adding longer boxes to
+`INTERVALS` in `app.js` is the one-line change if you want it to taper.
 
 Progress lives in `localStorage` under `rk.v1` — about 45 KB once the whole
 deck is learned. It never leaves the device, so there is nothing to sign into
@@ -115,7 +136,9 @@ npm pack kanjidic2-json && tar xzf kanjidic2-json-*.tgz
 npm install kuromoji
 
 # 3. A plain-text Japanese corpus, one sentence per line. This deck was built
-#    from the Japanese side of the OPUS Tatoeba en-ja corpus:
+#    from the OPUS Tatoeba en-ja corpus. BOTH halves are needed: the .ja file
+#    supplies the sentences and the .en file their translations, and the two
+#    are line-aligned (the builder refuses to run if they are not).
 #    https://opus.nlpl.eu/Tatoeba/  (or https://tatoeba.org/downloads)
 
 # 4. JMdict as JSON — the word glosses, and the fallback word for any kanji the
@@ -123,7 +146,7 @@ npm install kuromoji
 #    https://github.com/scriptin/jmdict-simplified and unzip it.
 
 node --max-old-space-size=4096 tools/build-deck.mjs \
-  package/KANJIS.json Tatoeba.en-ja.ja jmdict-eng-3.6.2.json
+  package/KANJIS.json Tatoeba.en-ja.ja Tatoeba.en-ja.en jmdict-eng-3.6.2.json
 ```
 
 The JMdict JSON is ~118 MB once unzipped, hence the heap flag.
@@ -163,16 +186,17 @@ be contextually off.
 
 Writing these down because each will sound reasonable in three weeks:
 
-sentence translations · multiple example sentences · kanji meaning lists ·
-reading lists · stroke order · audio · radical breakdowns · multiple choice ·
-accounts or sync · streaks · statistics · a settings screen
+multiple example sentences · kanji meaning lists · reading lists · stroke
+order · audio · radical breakdowns · multiple choice · accounts or sync ·
+streaks · statistics
 
-The whole app is `app.js`, and it is about 250 lines. If it passes 350,
-something got in that should not have.
+The whole app is `app.js`, and it is about 350 lines. Sentence translations and
+a settings screen were both on this list until they were asked for, which is
+the honest history of any such list.
 
 ## Credits and licensing
 
-Sentences come from Tatoeba (**CC BY 2.0 FR**); the kanji list and readings
+Sentences and their translations come from Tatoeba (**CC BY 2.0 FR**); the kanji list and readings
 from KANJIDIC2 and the word glosses from JMdict, both EDRDG and both
 **CC BY-SA 4.0**; the generated furigana from IPADIC via kuromoji. See
 [CREDITS.md](CREDITS.md) — `kanji.json` combines all of them and carries their

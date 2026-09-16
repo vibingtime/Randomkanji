@@ -18,6 +18,15 @@
 </head>
 <body>
 
+<button id="open-settings" type="button" aria-label="Settings" aria-haspopup="dialog">
+  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
+       stroke-width="1.6" stroke-linecap="round">
+    <path d="M3 8h18M3 16h18"/>
+    <circle cx="9" cy="8" r="2.4" fill="var(--bg)"/>
+    <circle cx="16" cy="16" r="2.4" fill="var(--bg)"/>
+  </svg>
+</button>
+
 <main id="card" hidden>
   <div id="face">
     <div id="kanji" lang="ja"></div>
@@ -25,6 +34,7 @@
   </div>
   <div id="back" hidden>
     <p id="sentence" lang="ja"></p>
+    <p id="translation"></p>
     <p id="gloss"></p>
   </div>
 </main>
@@ -35,6 +45,31 @@
 </div>
 
 <p id="status" role="status"></p>
+
+<div id="settings" hidden role="dialog" aria-modal="true" aria-label="Settings">
+  <div id="sheet">
+    <h2>Settings</h2>
+
+    <div class="field">
+      <label for="new-per-day">New cards per day</label>
+      <input id="new-per-day" type="number" min="1" max="2136" step="1" inputmode="numeric">
+    </div>
+
+    <label class="check">
+      <input id="no-limit" type="checkbox">
+      <span>No daily limit — introduce new kanji until the deck runs out</span>
+    </label>
+
+    <label class="check">
+      <input id="show-en" type="checkbox">
+      <span>Show the English translation under each sentence</span>
+    </label>
+
+    <p id="settings-note"></p>
+
+    <button id="close-settings" type="button">Done</button>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>

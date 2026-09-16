@@ -3,7 +3,7 @@
 // Leitner boxes 1-5. A card graded "Got it" moves up one box and comes back
 // after this many days; "Again" drops it to box 1, which is same-session.
 const INTERVALS = [0, 1, 3, 7, 21];
-const NEW_PER_DAY = 10;
+const DEFAULT_NEW_PER_DAY = 10;
 const STORE_KEY = 'rk.v1';
 
 const el = {
@@ -12,7 +12,15 @@ const el = {
   hint: document.getElementById('hint'),
   back: document.getElementById('back'),
   sentence: document.getElementById('sentence'),
+  translation: document.getElementById('translation'),
   gloss: document.getElementById('gloss'),
+  settings: document.getElementById('settings'),
+  openSettings: document.getElementById('open-settings'),
+  closeSettings: document.getElementById('close-settings'),
+  newPerDay: document.getElementById('new-per-day'),
+  noLimit: document.getElementById('no-limit'),
+  showEn: document.getElementById('show-en'),
+  note: document.getElementById('settings-note'),
   grade: document.getElementById('grade'),
   status: document.getElementById('status'),
 };
@@ -38,7 +46,16 @@ function today() {
 // ---- persistence ----------------------------------------------------------
 
 function blankState() {
-  return { v: 1, box: {}, next: 0, day: today(), newToday: 0 };
+  return {
+    v: 1,
+    box: {},
+    next: 0,
+    day: today(),
+    newToday: 0,
+    // 0 means no daily limit.
+    newPerDay: DEFAULT_NEW_PER_DAY,
+    showEn: true,
+  };
 }
 
 function load() {
@@ -49,6 +66,9 @@ function load() {
     // Corrupt or unavailable (private mode, blocked storage) - start fresh.
   }
   state = saved && saved.v === 1 ? saved : blankState();
+  // Saves written before these settings existed simply take the defaults.
+  state.newPerDay = Number.isFinite(state.newPerDay) ? state.newPerDay : DEFAULT_NEW_PER_DAY;
+  state.showEn = state.showEn !== false;
 
   if (state.day !== today()) {
     state.day = today();
@@ -84,9 +104,14 @@ function buildQueue() {
   return shuffle(due);
 }
 
+// 0 is stored for "no limit"; everything else is a straight count.
+function newLimit() {
+  return state.newPerDay > 0 ? state.newPerDay : Infinity;
+}
+
 function nextCard() {
   if (queue.length) return queue.shift();
-  if (state.newToday < NEW_PER_DAY && state.next < cards.length) {
+  if (state.newToday < newLimit() && state.next < cards.length) {
     state.newToday++;
     return state.next++;
   }
@@ -118,7 +143,7 @@ function rubyNode(text, reading) {
 }
 
 function renderSentence(target) {
-  const [text, ruby, wordStart, wordLen, gloss] = cards[current];
+  const [text, ruby, wordStart, wordLen, gloss, translation] = cards[current];
   const chars = Array.from(text);
   const byStart = new Map(ruby.map((r) => [r[0], r]));
 
@@ -150,6 +175,8 @@ function renderSentence(target) {
 
   el.sentence.replaceChildren(out);
   el.gloss.textContent = gloss;
+  // Word-only cards carry no sentence, so there is nothing to translate.
+  el.translation.textContent = state.showEn ? translation : '';
 }
 
 function render() {
@@ -211,6 +238,10 @@ document.getElementById('again').addEventListener('click', () => grade(false));
 document.getElementById('got').addEventListener('click', () => grade(true));
 
 document.addEventListener('keydown', (e) => {
+  if (!el.settings.hidden) {
+    if (e.key === 'Escape') closeSettings();
+    return;
+  }
   if (e.key === ' ' || e.key === 'Enter') {
     e.preventDefault();
     reveal();
@@ -219,6 +250,71 @@ document.addEventListener('keydown', (e) => {
   } else if (e.key === '2') {
     grade(true);
   }
+});
+
+// ---- settings -------------------------------------------------------------
+
+function describeSettings() {
+  if (!cards.length) return '';
+  const left = cards.length - state.next;
+  if (!left) return 'Every kanji in the deck has been introduced.';
+  if (state.newPerDay === 0) {
+    return `No limit: all ${left.toLocaleString()} remaining kanji can come up in one session, and each one you learn keeps coming back for review.`;
+  }
+  const days = Math.ceil(left / state.newPerDay);
+  return `${left.toLocaleString()} kanji left to introduce — about ${days.toLocaleString()} ${days === 1 ? 'day' : 'days'} at this rate.`;
+}
+
+function syncSettingsUI() {
+  const unlimited = state.newPerDay === 0;
+  el.noLimit.checked = unlimited;
+  el.newPerDay.disabled = unlimited;
+  // Keep the last number visible while disabled, so unticking restores it.
+  if (!unlimited) el.newPerDay.value = String(state.newPerDay);
+  else if (!el.newPerDay.value) el.newPerDay.value = String(DEFAULT_NEW_PER_DAY);
+  el.showEn.checked = state.showEn;
+  el.note.textContent = describeSettings();
+}
+
+function openSettings() {
+  syncSettingsUI();
+  el.settings.hidden = false;
+}
+
+function closeSettings() {
+  el.settings.hidden = true;
+  // Raising the limit should take effect now rather than tomorrow: if the
+  // session had ended only because no more new cards were allowed, resume.
+  if (current === null) advance();
+}
+
+function readNewPerDay() {
+  const n = Math.round(Number(el.newPerDay.value));
+  return Number.isFinite(n) && n >= 1 ? Math.min(n, cards.length) : DEFAULT_NEW_PER_DAY;
+}
+
+el.openSettings.addEventListener('click', openSettings);
+el.closeSettings.addEventListener('click', closeSettings);
+el.settings.addEventListener('click', (e) => {
+  if (e.target === el.settings) closeSettings();
+});
+
+el.newPerDay.addEventListener('change', () => {
+  state.newPerDay = readNewPerDay();
+  save();
+  syncSettingsUI();
+});
+
+el.noLimit.addEventListener('change', () => {
+  state.newPerDay = el.noLimit.checked ? 0 : readNewPerDay();
+  save();
+  syncSettingsUI();
+});
+
+el.showEn.addEventListener('change', () => {
+  state.showEn = el.showEn.checked;
+  save();
+  if (current !== null && revealed) render();
 });
 
 // ---- boot -----------------------------------------------------------------

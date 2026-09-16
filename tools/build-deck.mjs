@@ -5,13 +5,14 @@
 // Inputs (see README for how to fetch each):
 //   1. KANJIDIC2 as JSON  - which kanji are jouyou, the teaching order, and the
 //                           reading list used to sanity-check generated furigana
-//   2. Tatoeba ja corpus  - the example sentences
+//   2. Tatoeba ja + en    - the example sentences and their translations;
+//                           the two files are line-aligned
 //   3. JMdict as JSON     - the gloss for the tested word, and the fallback word
 //                           for kanji the corpus never uses
 //   4. kuromoji + IPADIC  - word segmentation and readings, from node_modules
 //
 //   node --max-old-space-size=4096 tools/build-deck.mjs \
-//     <KANJIS.json> <Tatoeba.en-ja.ja> <jmdict-eng.json>
+//     <KANJIS.json> <Tatoeba.en-ja.ja> <Tatoeba.en-ja.en> <jmdict-eng.json>
 //
 // No part of this ships to the browser.
 
@@ -20,9 +21,11 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 
-const [kanjidicPath, corpusPath, jmdictPath] = process.argv.slice(2);
-if (!kanjidicPath || !corpusPath || !jmdictPath) {
-  console.error('usage: node tools/build-deck.mjs <KANJIS.json> <Tatoeba.en-ja.ja> <jmdict-eng.json>');
+const [kanjidicPath, corpusPath, corpusEnPath, jmdictPath] = process.argv.slice(2);
+if (!kanjidicPath || !corpusPath || !corpusEnPath || !jmdictPath) {
+  console.error(
+    'usage: node tools/build-deck.mjs <KANJIS.json> <Tatoeba.en-ja.ja> <Tatoeba.en-ja.en> <jmdict-eng.json>'
+  );
   process.exit(1);
 }
 
@@ -180,19 +183,30 @@ function plausible(kanji, r) {
 
 const ALLOWED = /^[぀-ヿ一-鿿㐀-䶿豈-﫿々ー、。！？]+$/u;
 
+const jaLines = readFileSync(corpusPath, 'utf8').split('\n');
+const enLines = readFileSync(corpusEnPath, 'utf8').split('\n');
+if (jaLines.length !== enLines.length) {
+  console.error(`corpus halves are not aligned: ${jaLines.length} ja vs ${enLines.length} en`);
+  process.exit(1);
+}
+
 const sentences = [];
 const seenText = new Set();
-for (let line of readFileSync(corpusPath, 'utf8').split('\n')) {
-  line = line.trim();
+for (let i = 0; i < jaLines.length; i++) {
+  const line = jaLines[i].trim();
   if (!line || seenText.has(line)) continue;
   const chars = Array.from(line);
   if (chars.length < 6 || chars.length > 24) continue;
   if (!'。！？'.includes(chars[chars.length - 1])) continue;
   if (!ALLOWED.test(line) || !chars.some(isKanji)) continue;
+  // The halves are line-aligned, so the translation is simply the same index.
+  const en = enLines[i].trim();
+  if (!en) continue;
   seenText.add(line);
   const ks = chars.filter(isKanji);
   sentences.push({
     text: line,
+    en,
     // Shorter is better, around 13 characters; so is surrounding the target
     // with kanji taught early rather than late.
     score: Math.abs(chars.length - 13) +
@@ -306,7 +320,7 @@ const tokenizer = await new Promise((resolve, reject) =>
 
 // Returns a card, plus what is wrong with it so the caller can try the next
 // candidate before settling.
-function makeCard(source, literal) {
+function makeCard(source, literal, translation) {
   const tokens = tokenizer.tokenize(source);
   const ruby = [];
   let offset = 0;
@@ -361,7 +375,7 @@ function makeCard(source, literal) {
   const gloss = lookupGloss(targetForms, targetReading);
 
   return {
-    card: [text, kept, wordStart, wordLen, gloss ?? ''],
+    card: [text, kept, wordStart, wordLen, gloss ?? '', translation ?? ''],
     clean: dropped === 0 && bare === 0 && targetRead && !namedKanji && !!gloss,
     targetRead,
     gloss,
@@ -379,7 +393,7 @@ for (const literal of jouyou) {
   let chosen = null;
   let usable = null;
   for (const s of shortlist.get(literal) ?? []) {
-    const built = makeCard(s.text, literal);
+    const built = makeCard(s.text, literal, s.en);
     if (built.clean) { chosen = built; break; }
     // A sentence is still worth using if the only thing missing is full
     // furigana coverage elsewhere - but never if the tested word has no gloss,
@@ -404,12 +418,12 @@ for (const literal of jouyou) {
   const text = Array.from(w.text).map((c) => MODERNISE[c] ?? c).join('');
   const fitted = fitFurigana(w.text, w.reading);
   const ruby = fitted.length ? fitted : [[0, Array.from(text).length, toHiragana(w.reading)]];
-  cards.push([text, ruby, 0, Array.from(text).length, w.gloss]);
+  cards.push([text, ruby, 0, Array.from(text).length, w.gloss, '']);
   stats.word++;
 }
 
 const deck = {
-  v: 3,
+  v: 4,
   source: 'Tatoeba (CC BY 2.0 FR), KANJIDIC2 and JMdict (CC BY-SA 4.0), IPADIC readings',
   kanji: jouyou.join(''),
   cards,
@@ -417,9 +431,11 @@ const deck = {
 writeFileSync('kanji.json', JSON.stringify(deck) + '\n');
 
 const missing = cards.filter((c) => !c[4]).length;
+const translated = cards.filter((c) => c[5]).length;
 const kb = (Buffer.byteLength(JSON.stringify(deck)) / 1024).toFixed(1);
 console.log(`wrote kanji.json: ${cards.length} cards, ${kb} KB`);
 console.log(`  from a sentence:            ${stats.sentence}`);
 console.log(`  from a dictionary word:     ${stats.word}`);
 console.log(`  sentences with a gap:       ${stats.compromised} (${stats.bare} kanji left unread)`);
 console.log(`  cards with no gloss:        ${missing}`);
+console.log(`  sentences with translation: ${translated}`);

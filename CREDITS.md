@@ -5,7 +5,8 @@ below. It is a combined derivative work and carries all of their terms.
 
 ## Example sentences — Tatoeba
 
-The example sentences are from the [Tatoeba Project](https://tatoeba.org/),
+The example sentences and their English translations are from the
+[Tatoeba Project](https://tatoeba.org/),
 used here via the Japanese side of the
 [OPUS Tatoeba en-ja corpus](https://opus.nlpl.eu/Tatoeba/). Many of them
 originate in the Tanaka Corpus.
