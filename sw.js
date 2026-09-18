@@ -1,7 +1,7 @@
 // Cache-first app shell. Everything here is static, so a plain cache-first
 // strategy is correct; bump VERSION whenever any cached file changes and the
 // new service worker will drop the old cache on activate.
-const VERSION = 'v13';
+const VERSION = 'v14';
 const ASSETS = [
   './',
   'index.html',
@@ -16,7 +16,12 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  // cache:'reload' bypasses the browser's own HTTP cache. Without it a plain
+  // addAll re-reads whatever is still fresh there -- GitHub Pages serves these
+  // files with max-age -- and fills the brand new cache with the PREVIOUS
+  // release's bytes, so bumping VERSION changes nothing that anyone can see.
+  const fresh = ASSETS.map((url) => new Request(url, { cache: 'reload' }));
+  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(fresh)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {

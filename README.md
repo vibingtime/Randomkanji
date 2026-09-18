@@ -179,6 +179,17 @@ subpath works without changes.
 When you change any cached file, bump `VERSION` in `sw.js` — otherwise the
 old cache keeps being served.
 
+The worker precaches with `cache: 'reload'` on every request. That is not
+optional: GitHub Pages serves these files with `max-age`, and a plain
+`addAll()` re-reads whatever is still fresh in the browser's own HTTP cache, so
+a newly installed worker fills its brand new cache with the *previous*
+release's bytes. Bumping `VERSION` then changes nothing anybody can see, and no
+number of refreshes fixes it.
+
+Even with that right, an already-installed client needs **two** loads to show a
+new release: the first serves the old files while the new worker installs
+alongside, the second serves the new ones.
+
 ## Installing it on a phone
 
 A PWA can only be installed over **HTTPS**, so it has to be hosted somewhere —
