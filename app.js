@@ -1,8 +1,14 @@
 'use strict';
 
-// Leitner boxes 1-5. A card graded "Got it" moves up one box and comes back
-// after this many days; "Again" drops it to box 1, which is same-session.
-const INTERVALS = [0, 1, 3, 7, 21];
+// Leitner boxes. A card graded "Got it" moves up one box and comes back after
+// this many days; "Again" drops it to box 1, which is same-session.
+//
+// The steps roughly triple, which is what stops reviews piling up. The top box
+// is not a graduation - cards keep coming back forever - so its interval sets
+// the permanent daily load: at 180 days a finished deck of 2136 costs about
+// 2136/180 = 12 reviews a day, where a 21-day top box would cost 102. Adding or
+// removing a step is the whole change; the box cap follows the array length.
+const INTERVALS = [0, 1, 3, 7, 21, 60, 180];
 const DEFAULT_NEW_PER_DAY = 10;
 const STORE_KEY = 'rk.v1';
 
@@ -196,9 +202,11 @@ function finish() {
   current = null;
   el.card.hidden = true;
   el.grade.hidden = true;
+  // Reviews never stop, so there is no "finished" state to report - only
+  // whether there are new kanji left to meet.
   el.status.textContent =
-    state.next >= cards.length && !Object.keys(state.box).length
-      ? 'Deck complete.'
+    state.next >= cards.length
+      ? 'Nothing due right now. Every kanji has been introduced.'
       : 'Nothing due right now. Come back tomorrow.';
 }
 

@@ -36,7 +36,8 @@ The control in the top right opens them. Two things are adjustable:
 the session had already ended for the day, closing settings resumes it rather
 than making you wait until tomorrow. **No daily limit** introduces new kanji
 until the deck runs out, which at 2136 cards means a single session can hand
-you the entire jōyō set — every one of which then comes back for review.
+you the entire jōyō set — every one of which then comes back for review. The
+review backlog that creates is real, and no interval table softens it.
 
 **Show the English translation** — on by default, per-sentence.
 
@@ -45,7 +46,7 @@ reloads and reinstalls but do not sync between devices.
 
 ## How the scheduling works
 
-Leitner, five boxes. **Got it** moves a card up one box, **Again** drops it
+Leitner, seven boxes. **Got it** moves a card up one box, **Again** drops it
 straight back to box 1.
 
 | Box | Comes back after |
@@ -55,17 +56,24 @@ straight back to box 1.
 | 3   | 3 days |
 | 4   | 7 days |
 | 5   | 21 days |
+| 6   | 60 days |
+| 7   | 180 days |
+
+The steps roughly triple, and that taper is what keeps reviews from piling up.
+The top box is not a graduation — cards keep returning forever — so its
+interval fixes the permanent daily load: at 180 days a finished deck of 2136
+costs about `2136 ÷ 180 ≈ 12` reviews a day. A 21-day top box would cost 102.
+
+Simulated over three years at 10 new cards a day, the taper cuts the busiest
+day from 167 cards to 94, and the third-year average from 131 a day to 19. It
+holds up when you are not doing well, too: even at 60% recall its long-run load
+stays below what a 21-day top box costs someone recalling 95%.
 
 Cards due for review are served in random order, and reviews are never capped —
 only the introduction of new cards is. New cards are *introduced* in
 grade order — kyōiku grades 1 through 6, then the remaining jōyō, and
 within each grade the most frequent kanji first. So you meet 日 and 一 long
 before 璽 and 鬱, while your reviews stay shuffled. Ten new cards a day.
-
-Note that box 5 is the last box, so mature cards keep returning every 21 days
-rather than graduating. Once the whole deck is mature that settles at roughly
-`2136 ÷ 21 ≈ 100` reviews a day, indefinitely. Adding longer boxes to
-`INTERVALS` in `app.js` is the one-line change if you want it to taper.
 
 Progress lives in `localStorage` under `rk.v1` — about 45 KB once the whole
 deck is learned. It never leaves the device, so there is nothing to sign into
