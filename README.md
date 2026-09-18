@@ -76,7 +76,8 @@ review backlog that creates is real, and no interval table softens it.
 
 **Grading** — swipe, buttons, or both.
 
-**After "Again"** — two knobs on what a lapse costs.
+**When you swipe left / press Again** — two knobs on what a miss costs. The
+heading names whichever gesture the grading setting is currently using.
 
 *Cards until it comes back* sets the in-session spacing: exactly that many other
 cards are served before the lapsed one returns.
@@ -110,8 +111,14 @@ instead of being properly relearned.
 **How it works** — a collapsed tutorial covering the loop, the furigana rule,
 the boxes and where progress is kept.
 
-Both live in the same `localStorage` record as your progress, so they survive
-reloads and reinstalls but do not sync between devices.
+All of these live in the same `localStorage` record as your progress, so they
+survive reloads and reinstalls but do not sync between devices. Defaults apply
+only where nothing is stored yet — an existing install keeps what it has.
+
+The panel is a fixed overlay sized to `100dvh`, with the sheet centred by
+`margin: auto` rather than `align-items: center` on the parent. That matters:
+centring a flex item taller than its container pushes its top above the scroll
+origin, where no amount of scrolling reaches it.
 
 ## How the scheduling works
 

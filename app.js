@@ -36,6 +36,7 @@ const el = {
   swipeHint: document.getElementById('swipe-hint'),
   gradeMode: document.getElementById('grade-mode'),
   againRule: document.getElementById('again-rule'),
+  againLegend: document.getElementById('again-legend'),
   againAfterInput: document.getElementById('again-after'),
   againNote: document.getElementById('again-note'),
   srReveal: document.getElementById('sr-reveal'),
@@ -535,6 +536,11 @@ function syncSettingsUI() {
   for (const r of el.againRule.querySelectorAll('input[type="radio"]')) {
     r.checked = r.value === state.againDrop;
   }
+  // Name the action the way this user actually performs it.
+  el.againLegend.textContent =
+    state.grading === 'buttons' ? 'When you press Again'
+      : state.grading === 'swipe' ? 'When you swipe left'
+        : 'When you swipe left or press Again';
   el.againNote.textContent = describeAgain();
   el.note.textContent = describeSettings();
 }
@@ -579,6 +585,8 @@ el.gradeMode.addEventListener('change', (e) => {
   state.grading = e.target.value;
   applyGrading();
   save();
+  // The "Again" legend names the gesture, so it has to follow this choice.
+  syncSettingsUI();
   if (current !== null) render();
 });
 

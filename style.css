@@ -309,10 +309,11 @@ button:active { transform: translateY(1px); }
 #settings {
   position: fixed;
   inset: 0;
+  /* The visible viewport on a phone, which the address bar makes shorter than
+     the layout viewport that inset:0 alone would use. */
+  height: 100dvh;
   z-index: 3;
   display: flex;
-  align-items: center;
-  justify-content: center;
   padding: 1.5rem;
   /* Dim rather than tint, so it works in either theme. */
   background: color-mix(in srgb, var(--bg) 82%, transparent);
@@ -320,7 +321,11 @@ button:active { transform: translateY(1px); }
   overflow-y: auto;
 }
 
+/* margin:auto rather than align-items:center on the parent. Centring a flex
+   item taller than its container pushes the top of it above the scroll origin,
+   where it cannot be reached at all; margin:auto centres only the slack. */
 #sheet {
+  margin: auto;
   width: 100%;
   max-width: 24rem;
   padding: 1.5rem;
