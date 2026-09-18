@@ -41,7 +41,11 @@ near enough for a thumb. Let go short of it and the card springs back without
 grading.
 
 It is built on pointer events rather than touch events, so dragging with a
-mouse on a laptop behaves identically. A tap still reveals: a gesture only
+mouse on a laptop behaves identically. `overscroll-behavior-x: none` is
+load-bearing on Android: without it Chrome reads a rightward drag as its
+swipe-to-go-back gesture and cancels the pointer mid-swipe, so a right swipe
+aborted while an identical left swipe — with no forward history to navigate to —
+completed normally. Horizontal only, so pull-to-refresh still works. A tap still reveals: a gesture only
 counts as a swipe once it passes 10px and is more horizontal than vertical,
 which also means a vertical drag never grades anything by accident. Nothing can
 be graded before the answer is showing.

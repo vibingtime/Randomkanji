@@ -31,6 +31,11 @@
 html, body {
   height: 100%;
   margin: 0;
+  /* Chrome on Android reads a rightward drag as "go back" and cancels the
+     pointer mid-gesture, which made a right swipe abort while an identical
+     left swipe (no forward history to go to) completed. Horizontal only, so
+     pull-to-refresh still works. */
+  overscroll-behavior-x: none;
 }
 
 body {
