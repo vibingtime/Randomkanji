@@ -10,6 +10,9 @@
 // removing a step is the whole change; the box cap follows the array length.
 const INTERVALS = [0, 1, 3, 7, 21, 60, 180];
 const DEFAULT_NEW_PER_DAY = 10;
+// Other cards that must pass before a lapsed card is asked again, so the answer
+// is off the screen and out of mind by the time it returns.
+const RELEARN_GAP = 3;
 const STORE_KEY = 'rk.v1';
 
 const el = {
@@ -43,6 +46,8 @@ let cards = []; // [text, ruby, wordStart, wordLen] per kanji
 let position = new Map(); // kanji -> index into the deck
 let state = null;
 let queue = []; // deck indices still to see this session
+let relearn = []; // lapsed cards waiting for enough other cards to pass
+let shown = 0; // cards served this session, the clock the spacing runs on
 let current = null;
 let revealed = false;
 
@@ -134,12 +139,27 @@ function newLimit() {
   return state.newPerDay > 0 ? state.newPerDay : Infinity;
 }
 
+function serve(index) {
+  shown++;
+  return index;
+}
+
 function nextCard() {
-  if (queue.length) return queue.shift();
+  // A lapse that has waited long enough comes first.
+  const ready = relearn.findIndex((r) => shown >= r.showAfter);
+  if (ready !== -1) return serve(relearn.splice(ready, 1)[0].index);
+
+  if (queue.length) return serve(queue.shift());
+
   if (state.newToday < newLimit() && state.next < cards.length) {
     state.newToday++;
-    return state.next++;
+    return serve(state.next++);
   }
+
+  // Nothing left to space it out with. Better to ask early than to end the
+  // session on a card that is still failing.
+  if (relearn.length) return serve(relearn.shift().index);
+
   return null;
 }
 
@@ -263,10 +283,15 @@ function grade(known) {
   state.box[literal] = [box, today() + INTERVALS[box - 1]];
   save();
 
-  // Box 1 means "again this session": drop it a few cards back so the answer
-  // isn't still on screen when it returns.
+  // Box 1 means "again this session". Space it by counting cards actually
+  // served rather than by position in the queue: the queue is empty whenever
+  // new cards are being introduced, which used to put the card straight back
+  // on screen with its answer still fresh.
   if (box === 1) {
-    queue.splice(Math.min(queue.length, 3 + Math.floor(Math.random() * 3)), 0, current);
+    relearn.push({
+      index: current,
+      showAfter: shown + RELEARN_GAP + Math.floor(Math.random() * 3),
+    });
   }
   advance();
 }
@@ -516,6 +541,8 @@ async function start() {
   load();
   state.next = Math.min(state.next, cards.length);
   queue = buildQueue();
+  relearn = [];
+  shown = 0;
   advance();
 }
 

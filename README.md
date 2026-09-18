@@ -89,13 +89,20 @@ straight back to box 1.
 
 | Box | Comes back after |
 | --- | ---------------- |
-| 1   | later the same session |
+| 1   | later the same session, after 3&ndash;5 other cards |
 | 2   | 1 day  |
 | 3   | 3 days |
 | 4   | 7 days |
 | 5   | 21 days |
 | 6   | 60 days |
 | 7   | 180 days |
+
+A lapsed card is held back until at least three other cards have been served,
+counting cards actually shown rather than queue length — the queue is empty
+whenever new cards are being introduced, so position-based spacing put the card
+straight back on screen with its answer still fresh. If nothing else is left to
+space it out with, it is asked again early rather than ending the session on a
+card that is still failing.
 
 The steps roughly triple, and that taper is what keeps reviews from piling up.
 The top box is not a graduation — cards keep returning forever — so its
