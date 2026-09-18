@@ -42,8 +42,17 @@ counts as a swipe once it passes 10px and is more horizontal than vertical,
 which also means a vertical drag never grades anything by accident. Nothing can
 be graded before the answer is showing.
 
-The keyboard still works and is the accessible path now that the buttons are
-gone: `space` reveals, `←` or `1` is Again, `→` or `2` is Got it.
+The keyboard still works: `space` reveals, `←` or `1` is Again, `→` or `2` is
+Got it. Those shortcuts yield to whatever control has focus, so Enter still
+activates a button and the arrow keys still step the number field in settings.
+
+Neither a tap nor a swipe is available to a screen reader, so the card's three
+actions also exist as real buttons — *Show answer*, *Again*, *Got it* — clipped
+to a pixel and out of everyone else's way, but present in the accessibility
+tree and the tab order. Only the button that applies is exposed, activating one
+hands focus to whichever comes next, and the answer is marked `aria-live` so it
+is read out on reveal. They become visible when focused, so a sighted keyboard
+user does not lose track of where they are.
 
 ## Settings
 

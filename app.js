@@ -31,6 +31,9 @@ const el = {
   verdictAgain: document.getElementById('verdict-again'),
   verdictGot: document.getElementById('verdict-got'),
   swipeHint: document.getElementById('swipe-hint'),
+  srReveal: document.getElementById('sr-reveal'),
+  srAgain: document.getElementById('sr-again'),
+  srGot: document.getElementById('sr-got'),
   status: document.getElementById('status'),
 };
 
@@ -195,6 +198,11 @@ function render() {
 
   el.back.hidden = !revealed;
   el.verdicts.hidden = !revealed;
+  // Offer only the control that applies, so the reader is not handed a button
+  // that does nothing.
+  el.srReveal.hidden = revealed;
+  el.srAgain.hidden = !revealed;
+  el.srGot.hidden = !revealed;
   // Both hints only ever appear on the very first card, before anything has
   // been graded: one to explain the tap, one to explain the swipe.
   const firstEver = state.next <= 1 && !Object.keys(state.box).length;
@@ -208,6 +216,9 @@ function finish() {
   current = null;
   el.card.hidden = true;
   el.verdicts.hidden = true;
+  el.srReveal.hidden = true;
+  el.srAgain.hidden = true;
+  el.srGot.hidden = true;
   // Reviews never stop, so there is no "finished" state to report - only
   // whether there are new kanji left to meet.
   el.status.textContent =
@@ -349,11 +360,44 @@ el.card.addEventListener('pointercancel', (e) => {
   resetCard(true);
 });
 
+// Activating one of these hides it, and the browser's fix-up then drops focus
+// to the body - which lands after a synchronous focus() call and undoes it. So
+// hand focus to the next live control on the following frame instead.
+function handFocus(target) {
+  requestAnimationFrame(() => {
+    if (!target.hidden) target.focus();
+  });
+}
+
+el.srReveal.addEventListener('click', () => {
+  reveal();
+  handFocus(el.srAgain);
+});
+
+el.srAgain.addEventListener('click', () => {
+  grade(false);
+  handFocus(el.srReveal);
+});
+
+el.srGot.addEventListener('click', () => {
+  grade(true);
+  handFocus(el.srReveal);
+});
+
+// A focused control owns its own keys: Enter and Space activate a button,
+// arrows step a number field. Claiming them here would break every one of
+// them - including the buttons that exist precisely for keyboard users.
+function ownsKeys(node) {
+  return node instanceof HTMLElement &&
+    (node.isContentEditable || node.matches('button, input, select, textarea, a[href]'));
+}
+
 document.addEventListener('keydown', (e) => {
   if (!el.settings.hidden) {
     if (e.key === 'Escape') closeSettings();
     return;
   }
+  if (ownsKeys(e.target)) return;
   if (e.key === ' ' || e.key === 'Enter') {
     e.preventDefault();
     reveal();

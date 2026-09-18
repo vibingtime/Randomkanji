@@ -32,12 +32,21 @@
   <span id="verdict-got">Got it</span>
 </div>
 
+<!-- The card is a div driven by tap and swipe, neither of which a screen
+     reader can perform. These are the equivalent controls: off-screen for
+     everyone else, but in the accessibility tree and in the tab order. -->
+<div id="sr-controls">
+  <button id="sr-reveal" type="button" class="sr-only">Show answer</button>
+  <button id="sr-again" type="button" class="sr-only" hidden>Again</button>
+  <button id="sr-got" type="button" class="sr-only" hidden>Got it</button>
+</div>
+
 <main id="card" hidden>
   <div id="face">
     <div id="kanji" lang="ja"></div>
     <p id="hint" hidden>tap to reveal</p>
   </div>
-  <div id="back" hidden>
+  <div id="back" hidden aria-live="polite">
     <p id="sentence" lang="ja"></p>
     <p id="translation"></p>
     <p id="gloss"></p>

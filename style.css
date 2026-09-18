@@ -152,6 +152,40 @@ rt {
   letter-spacing: 0.04em;
 }
 
+/* ---- screen-reader controls ---- */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Focus has to stay visible: a sighted keyboard user tabbing here would
+   otherwise watch the focus ring vanish. Pointer users never reach these. */
+.sr-only:focus-visible {
+  position: fixed;
+  bottom: max(1.5rem, env(safe-area-inset-bottom));
+  left: 50%;
+  z-index: 4;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0.7rem 1.2rem;
+  transform: translateX(-50%);
+  clip-path: none;
+  border: 1px solid var(--accent);
+  border-radius: 0.5rem;
+  background: var(--btn);
+  color: var(--fg);
+  font: inherit;
+}
+
 /* ---- swipe verdicts ---- */
 
 /* Pinned to the edges rather than riding on the card, so the card moves
