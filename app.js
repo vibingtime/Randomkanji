@@ -23,6 +23,12 @@ const el = {
   sentence: document.getElementById('sentence'),
   translation: document.getElementById('translation'),
   gloss: document.getElementById('gloss'),
+  readings: document.getElementById('readings'),
+  onRow: document.getElementById('on-row'),
+  kunRow: document.getElementById('kun-row'),
+  on: document.getElementById('on'),
+  kun: document.getElementById('kun'),
+  showReadings: document.getElementById('show-readings'),
   settings: document.getElementById('settings'),
   openSettings: document.getElementById('open-settings'),
   closeSettings: document.getElementById('close-settings'),
@@ -77,6 +83,7 @@ function blankState() {
     // 0 means no daily limit.
     newPerDay: DEFAULT_NEW_PER_DAY,
     showEn: true,
+    showReadings: true,
     // 'swipe' | 'buttons' | 'both'
     grading: 'swipe',
     againAfter: DEFAULT_AGAIN_AFTER,
@@ -97,6 +104,7 @@ function load() {
   // Saves written before these settings existed simply take the defaults.
   state.newPerDay = Number.isFinite(state.newPerDay) ? state.newPerDay : DEFAULT_NEW_PER_DAY;
   state.showEn = state.showEn !== false;
+  state.showReadings = state.showReadings !== false;
   state.grading = ['swipe', 'buttons', 'both'].includes(state.grading) ? state.grading : 'swipe';
   state.againAfter = Number.isFinite(state.againAfter)
     ? Math.min(Math.max(1, Math.round(state.againAfter)), 20)
@@ -194,6 +202,29 @@ function needsFurigana(segment, target) {
   return false;
 }
 
+// KANJIDIC2 marks the okurigana boundary with a dot ("い.きる") and affix
+// position with a hyphen ("なま-"). Dim the okurigana, drop the hyphens.
+function readingNode(raw) {
+  const node = document.createElement('span');
+  const text = raw.replace(/-/g, '');
+  const dot = text.indexOf('.');
+  if (dot === -1) {
+    node.textContent = text;
+    return node;
+  }
+  node.append(text.slice(0, dot));
+  const oku = document.createElement('span');
+  oku.className = 'oku';
+  oku.textContent = text.slice(dot + 1);
+  node.append(oku);
+  return node;
+}
+
+function fillReadings(target, row, list) {
+  target.replaceChildren(...list.map(readingNode));
+  row.hidden = !list.length;
+}
+
 function rubyNode(text, reading) {
   const node = document.createElement('ruby');
   node.append(text);
@@ -204,7 +235,7 @@ function rubyNode(text, reading) {
 }
 
 function renderSentence(target) {
-  const [text, ruby, wordStart, wordLen, gloss, translation] = cards[current];
+  const [text, ruby, wordStart, wordLen, gloss, translation, on, kun] = cards[current];
   const chars = Array.from(text);
   const byStart = new Map(ruby.map((r) => [r[0], r]));
 
@@ -238,6 +269,12 @@ function renderSentence(target) {
   el.gloss.textContent = gloss;
   // Word-only cards carry no sentence, so there is nothing to translate.
   el.translation.textContent = state.showEn ? translation : '';
+
+  el.readings.hidden = !state.showReadings;
+  if (state.showReadings) {
+    fillReadings(el.on, el.onRow, on ?? []);
+    fillReadings(el.kun, el.kunRow, kun ?? []);
+  }
 }
 
 function render() {
@@ -531,6 +568,7 @@ function syncSettingsUI() {
   if (!unlimited) el.newPerDay.value = String(state.newPerDay);
   else if (!el.newPerDay.value) el.newPerDay.value = String(DEFAULT_NEW_PER_DAY);
   el.showEn.checked = state.showEn;
+  el.showReadings.checked = state.showReadings;
   for (const r of el.gradeMode.querySelectorAll('input')) r.checked = r.value === state.grading;
   el.againAfterInput.value = String(state.againAfter);
   for (const r of el.againRule.querySelectorAll('input[type="radio"]')) {
@@ -604,6 +642,12 @@ el.againRule.addEventListener('change', (e) => {
 
 el.showEn.addEventListener('change', () => {
   state.showEn = el.showEn.checked;
+  save();
+  if (current !== null && revealed) render();
+});
+
+el.showReadings.addEventListener('change', () => {
+  state.showReadings = el.showReadings.checked;
   save();
   if (current !== null && revealed) render();
 });

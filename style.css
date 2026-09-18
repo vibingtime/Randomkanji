@@ -59,13 +59,18 @@ body {
 
 #card {
   flex: 1;
-  /* The card is dragged horizontally, so the browser must not claim the
-     gesture for scrolling or back-navigation. */
-  touch-action: none;
+  /* Horizontal belongs to us for the swipe; vertical goes to the browser so a
+     card too tall for the screen can still be scrolled. */
+  touch-action: pan-y;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  /* Same trap as the settings sheet: centring content taller than its box puts
+     the top out of reach. "safe" falls back to start-aligned when it overflows.
+     The plain value above stays as the fallback for browsers without it. */
+  justify-content: safe center;
   gap: 2rem;
   width: 100%;
   max-width: 34rem;
@@ -140,6 +145,43 @@ rt {
   font-size: 0.9375rem;
   text-wrap: balance;
 }
+
+/* Every on and kun reading of the kanji itself, under the example. */
+#readings {
+  display: inline-block;
+  max-width: 100%;
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  text-align: left;
+}
+
+.reading-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.15rem 0;
+}
+
+.rlabel {
+  flex: none;
+  width: 2.1rem;
+  color: var(--dim);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rlist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 0.7rem;
+  font-family: var(--kanji-font);
+  font-size: 1rem;
+}
+
+/* The kana written outside the kanji, dimmed so the reading itself stands out. */
+.oku { color: var(--dim); }
 
 /* The word the card is testing. */
 .target {

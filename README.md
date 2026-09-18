@@ -78,6 +78,11 @@ review backlog that creates is real, and no interval table softens it.
 
 **Show the English translation** — on by default, per-sentence.
 
+**Show the on'yomi and kun'yomi** — on by default. Every reading KANJIDIC2 has
+for the kanji itself, under the example, with the okurigana dimmed so the part
+belonging to the kanji stands out. 生 has twenty of them, which is why the card
+is allowed to scroll.
+
 **Grading** — swipe, buttons, or both.
 
 **When you swipe left / press Again** — two knobs on what a miss costs. The
@@ -293,9 +298,8 @@ be contextually off.
 
 Writing these down because each will sound reasonable in three weeks:
 
-multiple example sentences · kanji meaning lists · reading lists · stroke
-order · audio · radical breakdowns · multiple choice · accounts or sync ·
-streaks · statistics
+multiple example sentences · kanji meaning lists · stroke order · audio ·
+radical breakdowns · multiple choice · accounts or sync · streaks · statistics
 
 The whole app is `app.js`, and it is about 350 lines. Sentence translations and
 a settings screen were both on this list until they were asked for, which is

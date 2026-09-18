@@ -140,6 +140,18 @@ if (jouyou.length !== 2136) {
 const rank = new Map(jouyou.map((k, i) => [k, i]));
 for (const [old, modern] of Object.entries(MODERNISE)) rank.set(old, rank.get(modern));
 
+// Every on and kun reading, carried onto the card itself. Kept raw: the dots
+// marking okurigana and the hyphens marking affix position are rendered, not
+// stripped, so the app can dim the okurigana.
+const readingList = new Map();
+for (const k of kanjidic) {
+  if (!k.readings) continue;
+  readingList.set(MODERNISE[k.literal] ?? k.literal, {
+    on: k.readings.ja_on ?? [],
+    kun: k.readings.ja_kun ?? [],
+  });
+}
+
 // Known readings per kanji, used to catch furigana the tokeniser got wrong.
 const known = new Map();
 for (const k of kanjidic) {
@@ -402,10 +414,12 @@ for (const literal of jouyou) {
   }
   chosen ??= usable;
 
+  const say = readingList.get(literal) ?? { on: [], kun: [] };
+
   if (chosen) {
     stats.sentence++;
     if (!chosen.clean) { stats.compromised++; stats.bare += chosen.bare; }
-    cards.push(chosen.card);
+    cards.push([...chosen.card, say.on, say.kun]);
     continue;
   }
 
@@ -418,12 +432,12 @@ for (const literal of jouyou) {
   const text = Array.from(w.text).map((c) => MODERNISE[c] ?? c).join('');
   const fitted = fitFurigana(w.text, w.reading);
   const ruby = fitted.length ? fitted : [[0, Array.from(text).length, toHiragana(w.reading)]];
-  cards.push([text, ruby, 0, Array.from(text).length, w.gloss, '']);
+  cards.push([text, ruby, 0, Array.from(text).length, w.gloss, '', say.on, say.kun]);
   stats.word++;
 }
 
 const deck = {
-  v: 4,
+  v: 5,
   source: 'Tatoeba (CC BY 2.0 FR), KANJIDIC2 and JMdict (CC BY-SA 4.0), IPADIC readings',
   kanji: jouyou.join(''),
   cards,
@@ -439,3 +453,5 @@ console.log(`  from a dictionary word:     ${stats.word}`);
 console.log(`  sentences with a gap:       ${stats.compromised} (${stats.bare} kanji left unread)`);
 console.log(`  cards with no gloss:        ${missing}`);
 console.log(`  sentences with translation: ${translated}`);
+const noReading = cards.filter((c) => !c[6].length && !c[7].length).length;
+console.log(`  cards with no reading:      ${noReading}`);

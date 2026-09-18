@@ -41,6 +41,10 @@
     <p id="sentence" lang="ja"></p>
     <p id="translation"></p>
     <p id="gloss"></p>
+    <div id="readings" hidden>
+      <div class="reading-row" id="on-row"><span class="rlabel">on</span><span class="rlist" id="on" lang="ja"></span></div>
+      <div class="reading-row" id="kun-row"><span class="rlabel">kun</span><span class="rlist" id="kun" lang="ja"></span></div>
+    </div>
     <p id="swipe-hint" hidden>&larr; Again &nbsp;&nbsp;·&nbsp;&nbsp; Got it &rarr;</p>
   </div>
 </main>
@@ -73,6 +77,11 @@
     <label class="check">
       <input id="show-en" type="checkbox">
       <span>Show the English translation under each sentence</span>
+    </label>
+
+    <label class="check">
+      <input id="show-readings" type="checkbox">
+      <span>Show the on&rsquo;yomi and kun&rsquo;yomi under each card</span>
     </label>
 
     <fieldset id="grade-mode">
