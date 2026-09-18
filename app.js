@@ -31,6 +31,7 @@ const el = {
   verdictAgain: document.getElementById('verdict-again'),
   verdictGot: document.getElementById('verdict-got'),
   swipeHint: document.getElementById('swipe-hint'),
+  gradeMode: document.getElementById('grade-mode'),
   srReveal: document.getElementById('sr-reveal'),
   srAgain: document.getElementById('sr-again'),
   srGot: document.getElementById('sr-got'),
@@ -67,6 +68,8 @@ function blankState() {
     // 0 means no daily limit.
     newPerDay: DEFAULT_NEW_PER_DAY,
     showEn: true,
+    // 'swipe' | 'buttons' | 'both'
+    grading: 'swipe',
   };
 }
 
@@ -81,6 +84,8 @@ function load() {
   // Saves written before these settings existed simply take the defaults.
   state.newPerDay = Number.isFinite(state.newPerDay) ? state.newPerDay : DEFAULT_NEW_PER_DAY;
   state.showEn = state.showEn !== false;
+  state.grading = ['swipe', 'buttons', 'both'].includes(state.grading) ? state.grading : 'swipe';
+  applyGrading();
 
   if (state.day !== today()) {
     state.day = today();
@@ -114,6 +119,14 @@ function buildQueue() {
   }
   // Reviews are random; only the introduction of new cards follows the deck order.
   return shuffle(due);
+}
+
+function swipeEnabled() {
+  return state.grading !== 'buttons';
+}
+
+function applyGrading() {
+  document.body.classList.toggle('grade-buttons', state.grading !== 'swipe');
 }
 
 // 0 is stored for "no limit"; everything else is a straight count.
@@ -207,7 +220,7 @@ function render() {
   // been graded: one to explain the tap, one to explain the swipe.
   const firstEver = state.next <= 1 && !Object.keys(state.box).length;
   el.hint.hidden = revealed || !firstEver;
-  el.swipeHint.hidden = !revealed || !firstEver;
+  el.swipeHint.hidden = !revealed || !firstEver || !swipeEnabled();
   el.card.hidden = false;
   el.status.textContent = '';
 }
@@ -330,7 +343,7 @@ el.card.addEventListener('pointermove', (e) => {
     if (Math.abs(dx) < TAP_SLOP && Math.abs(dy) < TAP_SLOP) return;
     // Nothing to grade until the answer is showing, and a mostly-vertical
     // drag is not a verdict. Either way the gesture can still end as a tap.
-    if (!revealed || Math.abs(dx) <= Math.abs(dy)) return;
+    if (!revealed || !swipeEnabled() || Math.abs(dx) <= Math.abs(dy)) return;
     dragging = true;
     el.verdicts.classList.add('dragging');
   }
@@ -429,6 +442,7 @@ function syncSettingsUI() {
   if (!unlimited) el.newPerDay.value = String(state.newPerDay);
   else if (!el.newPerDay.value) el.newPerDay.value = String(DEFAULT_NEW_PER_DAY);
   el.showEn.checked = state.showEn;
+  for (const r of el.gradeMode.querySelectorAll('input')) r.checked = r.value === state.grading;
   el.note.textContent = describeSettings();
 }
 
@@ -465,6 +479,14 @@ el.noLimit.addEventListener('change', () => {
   state.newPerDay = el.noLimit.checked ? 0 : readNewPerDay();
   save();
   syncSettingsUI();
+});
+
+el.gradeMode.addEventListener('change', (e) => {
+  if (!(e.target instanceof HTMLInputElement) || !e.target.checked) return;
+  state.grading = e.target.value;
+  applyGrading();
+  save();
+  if (current !== null) render();
 });
 
 el.showEn.addEventListener('change', () => {

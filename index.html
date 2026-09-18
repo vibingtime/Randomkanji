@@ -32,15 +32,6 @@
   <span id="verdict-got">Got it</span>
 </div>
 
-<!-- The card is a div driven by tap and swipe, neither of which a screen
-     reader can perform. These are the equivalent controls: off-screen for
-     everyone else, but in the accessibility tree and in the tab order. -->
-<div id="sr-controls">
-  <button id="sr-reveal" type="button" class="sr-only">Show answer</button>
-  <button id="sr-again" type="button" class="sr-only" hidden>Again</button>
-  <button id="sr-got" type="button" class="sr-only" hidden>Got it</button>
-</div>
-
 <main id="card" hidden>
   <div id="face">
     <div id="kanji" lang="ja"></div>
@@ -53,6 +44,15 @@
     <p id="swipe-hint" hidden>&larr; swipe again &nbsp;·&nbsp; got it swipe &rarr;</p>
   </div>
 </main>
+
+<!-- The card is a div driven by tap and swipe, neither of which a screen
+     reader can perform, so the same actions exist as real buttons. They are
+     clipped to a pixel unless the grading setting asks for a visible row. -->
+<div id="sr-controls">
+  <button id="sr-reveal" type="button" class="sr-only">Show answer</button>
+  <button id="sr-again" type="button" class="sr-only" hidden>Again</button>
+  <button id="sr-got" type="button" class="sr-only" hidden>Got it</button>
+</div>
 
 <p id="status" role="status"></p>
 
@@ -74,6 +74,43 @@
       <input id="show-en" type="checkbox">
       <span>Show the English translation under each sentence</span>
     </label>
+
+    <fieldset id="grade-mode">
+      <legend>Grading</legend>
+      <label class="check">
+        <input type="radio" name="grade-mode" value="swipe">
+        <span>Swipe the card — left for Again, right for Got it</span>
+      </label>
+      <label class="check">
+        <input type="radio" name="grade-mode" value="buttons">
+        <span>Buttons under the card</span>
+      </label>
+      <label class="check">
+        <input type="radio" name="grade-mode" value="both">
+        <span>Both</span>
+      </label>
+    </fieldset>
+
+    <details id="tutorial">
+      <summary>How it works</summary>
+      <ol>
+        <li>A card shows one kanji on its own. Try to read it, then tap the card
+          to turn it over.</li>
+        <li>The back is one real sentence using that kanji. The word being
+          tested is underlined, and its meaning is the line underneath.</li>
+        <li>Grade yourself honestly: <b>Again</b> if you could not read it,
+          <b>Got it</b> if you could.</li>
+        <li>Small kana appear above the kanji you have not been taught yet, and
+          always above the one being tested. They thin out as you progress.</li>
+        <li><b>Got it</b> moves a card up a box, so it returns after 1 day, then
+          3, 7, 21, 60 and 180. <b>Again</b> sends it back to the start and
+          shows it again this session.</li>
+        <li>Ten new kanji a day to begin with; reviews are never capped. There
+          are 2136 in all — every kanji taught in Japanese schools.</li>
+      </ol>
+      <p>Progress is saved on this device only. It is never uploaded, and it
+        does not follow you to another phone or browser.</p>
+    </details>
 
     <p id="settings-note"></p>
 

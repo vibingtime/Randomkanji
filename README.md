@@ -6,8 +6,9 @@ buttons, works offline.
 The front is the kanji alone. Tap it (or press space) and the back shows **one
 example sentence** using it, with the tested word underlined, furigana over the
 kanji you are not expected to read yet, and **the meaning of that one word**
-underneath. Then grade yourself by **swiping the card: left for Again, right
-for Got it**, and the next one comes up.
+underneath. Then grade yourself — by default **swipe the card: left for Again,
+right for Got it** — and the next one comes up. Buttons are available instead,
+or as well, in settings.
 
 Under the sentence sit two lines of English: a translation of the whole
 sentence, small and dimmed, and below it the meaning of the underlined word,
@@ -28,9 +29,12 @@ gets progressively harder to read as you work through the deck, which is the
 point. Readings are stored per word, so compounds like 民謡(みんよう) are
 annotated as a unit rather than character by character.
 
-## Grading by swipe
+## Grading
 
-The card follows your finger and tilts as it goes; a label fades in at the
+Three ways to answer, chosen in settings: **swipe** (the default), **buttons**
+under the card, or **both**. Whichever is picked, the keyboard always works.
+
+Swiping: the card follows your finger and tilts as it goes; a label fades in at the
 bottom corner you are heading for, and the card flies off once you pass the
 threshold — `min(120px, 28% of the width)`, far enough to be deliberate and
 near enough for a thumb. Let go short of it and the card springs back without
@@ -47,12 +51,15 @@ Got it. Those shortcuts yield to whatever control has focus, so Enter still
 activates a button and the arrow keys still step the number field in settings.
 
 Neither a tap nor a swipe is available to a screen reader, so the card's three
-actions also exist as real buttons — *Show answer*, *Again*, *Got it* — clipped
-to a pixel and out of everyone else's way, but present in the accessibility
-tree and the tab order. Only the button that applies is exposed, activating one
-hands focus to whichever comes next, and the answer is marked `aria-live` so it
-is read out on reveal. They become visible when focused, so a sighted keyboard
-user does not lose track of where they are.
+actions also exist as real buttons — *Show answer*, *Again*, *Got it* — present
+in the accessibility tree and the tab order. These are the same buttons the
+grading setting shows: in swipe mode they are clipped to a pixel and out of
+everyone else's way, and choosing buttons simply unclips them, so there is only
+one set of controls and one set of handlers to keep honest. Only the button
+that applies is exposed, activating one hands focus to whichever comes next,
+and the answer is marked `aria-live` so it is read out on reveal. Even while
+clipped they become visible when focused, so a sighted keyboard user does not
+lose track of where they are.
 
 ## Settings
 
@@ -66,6 +73,11 @@ you the entire jōyō set — every one of which then comes back for review. The
 review backlog that creates is real, and no interval table softens it.
 
 **Show the English translation** — on by default, per-sentence.
+
+**Grading** — swipe, buttons, or both.
+
+**How it works** — a collapsed tutorial covering the loop, the furigana rule,
+the boxes and where progress is kept.
 
 Both live in the same `localStorage` record as your progress, so they survive
 reloads and reinstalls but do not sync between devices.

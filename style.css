@@ -186,6 +186,39 @@ rt {
   font: inherit;
 }
 
+/* Out of flow by default, so it contributes no height and no flex gap. The
+   grading setting turns it into a real button row. */
+#sr-controls { display: contents; }
+
+body.grade-buttons #sr-controls {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 34rem;
+}
+
+/* Same buttons, unclipped. */
+body.grade-buttons #sr-again,
+body.grade-buttons #sr-got {
+  position: static;
+  flex: 1;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0.95rem 1rem;
+  overflow: visible;
+  clip-path: none;
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  background: var(--btn);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+body.grade-buttons #sr-again:active,
+body.grade-buttons #sr-got:active { transform: translateY(1px); }
+
 /* ---- swipe verdicts ---- */
 
 /* Pinned to the edges rather than riding on the card, so the card moves
@@ -339,6 +372,46 @@ button:active { transform: translateY(1px); }
   height: 1.05rem;
   margin: 0.15rem 0 0;
   accent-color: var(--accent);
+}
+
+#grade-mode {
+  margin: 1.25rem 0 0;
+  padding: 0;
+  border: 0;
+}
+
+#grade-mode legend {
+  padding: 0;
+  margin-bottom: 0.7rem;
+  color: var(--dim);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#tutorial {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+#tutorial summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#tutorial ol {
+  margin: 0.9rem 0 0;
+  padding-left: 1.15rem;
+}
+
+#tutorial li { margin-bottom: 0.6rem; }
+
+#tutorial p {
+  margin: 0.9rem 0 0;
+  color: var(--dim);
 }
 
 #settings-note {
