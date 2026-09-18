@@ -6,8 +6,8 @@ buttons, works offline.
 The front is the kanji alone. Tap it (or press space) and the back shows **one
 example sentence** using it, with the tested word underlined, furigana over the
 kanji you are not expected to read yet, and **the meaning of that one word**
-underneath. Grade yourself **Again** or **Got it** (keys `1` and `2`) and the
-next card comes up.
+underneath. Then grade yourself by **swiping the card: left for Again, right
+for Got it**, and the next one comes up.
 
 Under the sentence sit two lines of English: a translation of the whole
 sentence, small and dimmed, and below it the meaning of the underlined word,
@@ -27,6 +27,23 @@ Everything you have already been taught stays bare. The same sentence therefore
 gets progressively harder to read as you work through the deck, which is the
 point. Readings are stored per word, so compounds like 民謡(みんよう) are
 annotated as a unit rather than character by character.
+
+## Grading by swipe
+
+The card follows your finger and tilts as it goes; a label fades in at the
+bottom corner you are heading for, and the card flies off once you pass the
+threshold — `min(120px, 28% of the width)`, far enough to be deliberate and
+near enough for a thumb. Let go short of it and the card springs back without
+grading.
+
+It is built on pointer events rather than touch events, so dragging with a
+mouse on a laptop behaves identically. A tap still reveals: a gesture only
+counts as a swipe once it passes 10px and is more horizontal than vertical,
+which also means a vertical drag never grades anything by accident. Nothing can
+be graded before the answer is showing.
+
+The keyboard still works and is the accessible path now that the buttons are
+gone: `space` reveals, `←` or `1` is Again, `→` or `2` is Got it.
 
 ## Settings
 

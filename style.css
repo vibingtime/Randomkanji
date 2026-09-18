@@ -54,6 +54,9 @@ body {
 
 #card {
   flex: 1;
+  /* The card is dragged horizontally, so the browser must not claim the
+     gesture for scrolling or back-navigation. */
+  touch-action: none;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -142,14 +145,48 @@ rt {
 
 .target rt { color: var(--accent); }
 
-/* ---- controls ---- */
-
-#grade {
-  display: flex;
-  gap: 0.75rem;
-  width: 100%;
-  max-width: 34rem;
+#swipe-hint {
+  margin: 1.5rem 0 0;
+  color: var(--dim);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
 }
+
+/* ---- swipe verdicts ---- */
+
+/* Pinned to the edges rather than riding on the card, so the card moves
+   towards the label you are choosing. */
+#verdicts {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  /* Bottom corners, where the grade buttons used to sit: clear of the sentence,
+     at thumb height, and on the side you swipe towards. */
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 1.25rem max(1.75rem, env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+
+#verdicts span {
+  padding: 0.5rem 0.9rem;
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0;
+  /* Fades on release; while a finger is down it tracks the drag directly. */
+  transition: opacity 90ms linear;
+}
+
+#verdicts.dragging span { transition: none; }
+
+#verdict-again { color: var(--dim); }
+#verdict-got { color: var(--accent); }
+
+/* ---- controls ---- */
 
 button {
   flex: 1;

@@ -27,7 +27,10 @@ const el = {
   noLimit: document.getElementById('no-limit'),
   showEn: document.getElementById('show-en'),
   note: document.getElementById('settings-note'),
-  grade: document.getElementById('grade'),
+  verdicts: document.getElementById('verdicts'),
+  verdictAgain: document.getElementById('verdict-again'),
+  verdictGot: document.getElementById('verdict-got'),
+  swipeHint: document.getElementById('swipe-hint'),
   status: document.getElementById('status'),
 };
 
@@ -191,9 +194,12 @@ function render() {
   if (revealed) renderSentence(target);
 
   el.back.hidden = !revealed;
-  el.grade.hidden = !revealed;
-  // Only ever shown on the very first card, before anything has been graded.
-  el.hint.hidden = revealed || state.next > 1 || Object.keys(state.box).length > 0;
+  el.verdicts.hidden = !revealed;
+  // Both hints only ever appear on the very first card, before anything has
+  // been graded: one to explain the tap, one to explain the swipe.
+  const firstEver = state.next <= 1 && !Object.keys(state.box).length;
+  el.hint.hidden = revealed || !firstEver;
+  el.swipeHint.hidden = !revealed || !firstEver;
   el.card.hidden = false;
   el.status.textContent = '';
 }
@@ -201,7 +207,7 @@ function render() {
 function finish() {
   current = null;
   el.card.hidden = true;
-  el.grade.hidden = true;
+  el.verdicts.hidden = true;
   // Reviews never stop, so there is no "finished" state to report - only
   // whether there are new kanji left to meet.
   el.status.textContent =
@@ -241,9 +247,107 @@ function grade(known) {
   advance();
 }
 
-el.card.addEventListener('click', reveal);
-document.getElementById('again').addEventListener('click', () => grade(false));
-document.getElementById('got').addEventListener('click', () => grade(true));
+// Swipe left to say "Again", right to say "Got it". Pointer events rather than
+// touch events, so a mouse drag on a laptop works the same way.
+
+const TAP_SLOP = 10; // movement under this is still a tap
+const FLY_MS = 200;
+
+let pointerId = null;
+let startX = 0;
+let startY = 0;
+let dx = 0;
+let dragging = false;
+
+// Far enough to be deliberate, near enough to reach with a thumb.
+function threshold() {
+  return Math.min(120, window.innerWidth * 0.28);
+}
+
+function paintDrag(offset) {
+  el.card.style.transform = `translateX(${offset}px) rotate(${offset / 22}deg)`;
+  const t = threshold();
+  el.verdictAgain.style.opacity = offset < 0 ? String(Math.min(1, -offset / t)) : '0';
+  el.verdictGot.style.opacity = offset > 0 ? String(Math.min(1, offset / t)) : '0';
+}
+
+function resetCard(animate) {
+  el.verdicts.classList.remove('dragging');
+  el.card.style.transition = animate ? 'transform 180ms ease-out' : 'none';
+  el.card.style.transform = '';
+  el.card.style.opacity = '';
+  el.verdictAgain.style.opacity = '0';
+  el.verdictGot.style.opacity = '0';
+}
+
+function flyAway(known) {
+  el.card.style.transition = `transform ${FLY_MS}ms ease-out, opacity ${FLY_MS}ms ease-out`;
+  el.card.style.transform =
+    `translateX(${(known ? 1 : -1) * window.innerWidth}px) rotate(${known ? 14 : -14}deg)`;
+  el.card.style.opacity = '0';
+  setTimeout(() => {
+    // Put the card back with no transition first, so the next one is already
+    // centred by the time it is rendered.
+    resetCard(false);
+    grade(known);
+  }, FLY_MS);
+}
+
+function endPointer() {
+  if (pointerId !== null && el.card.hasPointerCapture(pointerId)) {
+    el.card.releasePointerCapture(pointerId);
+  }
+  pointerId = null;
+}
+
+el.card.addEventListener('pointerdown', (e) => {
+  if (current === null || pointerId !== null) return;
+  pointerId = e.pointerId;
+  startX = e.clientX;
+  startY = e.clientY;
+  dx = 0;
+  dragging = false;
+  el.card.style.transition = 'none';
+  el.card.setPointerCapture(pointerId);
+});
+
+el.card.addEventListener('pointermove', (e) => {
+  if (e.pointerId !== pointerId) return;
+  dx = e.clientX - startX;
+  const dy = e.clientY - startY;
+  if (!dragging) {
+    if (Math.abs(dx) < TAP_SLOP && Math.abs(dy) < TAP_SLOP) return;
+    // Nothing to grade until the answer is showing, and a mostly-vertical
+    // drag is not a verdict. Either way the gesture can still end as a tap.
+    if (!revealed || Math.abs(dx) <= Math.abs(dy)) return;
+    dragging = true;
+    el.verdicts.classList.add('dragging');
+  }
+  paintDrag(dx);
+});
+
+el.card.addEventListener('pointerup', (e) => {
+  if (e.pointerId !== pointerId) return;
+  const swiped = dragging;
+  const offset = dx;
+  dragging = false;
+  endPointer();
+
+  if (!swiped) {
+    resetCard(false);
+    reveal();
+    return;
+  }
+  if (Math.abs(offset) >= threshold()) flyAway(offset > 0);
+  else resetCard(true);
+});
+
+el.card.addEventListener('pointercancel', (e) => {
+  if (e.pointerId !== pointerId) return;
+  dragging = false;
+  endPointer();
+  resetCard(true);
+});
 
 document.addEventListener('keydown', (e) => {
   if (!el.settings.hidden) {
@@ -253,9 +357,9 @@ document.addEventListener('keydown', (e) => {
   if (e.key === ' ' || e.key === 'Enter') {
     e.preventDefault();
     reveal();
-  } else if (e.key === '1') {
+  } else if (e.key === '1' || e.key === 'ArrowLeft') {
     grade(false);
-  } else if (e.key === '2') {
+  } else if (e.key === '2' || e.key === 'ArrowRight') {
     grade(true);
   }
 });

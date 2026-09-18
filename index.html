@@ -27,6 +27,11 @@
   </svg>
 </button>
 
+<div id="verdicts" hidden aria-hidden="true">
+  <span id="verdict-again">Again</span>
+  <span id="verdict-got">Got it</span>
+</div>
+
 <main id="card" hidden>
   <div id="face">
     <div id="kanji" lang="ja"></div>
@@ -36,13 +41,9 @@
     <p id="sentence" lang="ja"></p>
     <p id="translation"></p>
     <p id="gloss"></p>
+    <p id="swipe-hint" hidden>&larr; swipe again &nbsp;·&nbsp; got it swipe &rarr;</p>
   </div>
 </main>
-
-<div id="grade" hidden>
-  <button id="again" type="button">Again</button>
-  <button id="got" type="button">Got it</button>
-</div>
 
 <p id="status" role="status"></p>
 
