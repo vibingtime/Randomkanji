@@ -389,6 +389,30 @@ button:active { transform: translateY(1px); }
   text-transform: uppercase;
 }
 
+#again-rule {
+  margin: 1.25rem 0 0;
+  padding: 0;
+  border: 0;
+}
+
+#again-rule legend {
+  padding: 0;
+  margin-bottom: 0.7rem;
+  color: var(--dim);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#again-rule .field { margin-bottom: 0.9rem; }
+
+#again-note {
+  margin: 0.2rem 0 0;
+  color: var(--dim);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
 #tutorial {
   margin-top: 1.25rem;
   padding-top: 1.25rem;

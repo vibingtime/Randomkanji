@@ -76,6 +76,30 @@ review backlog that creates is real, and no interval table softens it.
 
 **Grading** — swipe, buttons, or both.
 
+**After "Again"** — two knobs on what a lapse costs.
+
+*Cards until it comes back* sets the in-session spacing: exactly that many other
+cards are served before the lapsed one returns.
+
+*Then…* sets where the card resumes **once you answer it correctly again**. The
+default starts it over from day one, the classic Leitner reset: a card that had
+reached 180 days needs six correct answers and 92 days to get back there. The
+other two options resume one or two boxes below the height it had reached, so
+the same card returns at 60 or 21 days instead.
+
+The re-drill happens either way — a lapse always drops to box 1 first, so you
+never skip actually recalling the card. Only the long-term interval is
+forgiven. The card remembers the height it fell from in a third slot alongside
+its box and due date; saves written before that slot existed simply have
+nothing there and behave as they always did.
+
+Softening cuts reviews — simulated over three years, the year-three average
+falls from 19 a day to 14 at 90% recall, and from 33 to 20 at 80%. Treat those
+as an upper bound rather than a prediction: the simulation holds recall fixed
+regardless of scheduling, which is exactly the assumption in question. The real
+cost is that a kanji you keep forgetting gets pushed further out each time
+instead of being properly relearned.
+
 **How it works** — a collapsed tutorial covering the loop, the furigana rule,
 the boxes and where progress is kept.
 
@@ -97,8 +121,9 @@ straight back to box 1.
 | 6   | 60 days |
 | 7   | 180 days |
 
-A lapsed card is held back until at least three other cards have been served,
-counting cards actually shown rather than queue length — the queue is empty
+A lapsed card is held back until a set number of other cards have been served
+(three by default, adjustable), counting cards actually shown rather than queue
+length — the queue is empty
 whenever new cards are being introduced, so position-based spacing put the card
 straight back on screen with its answer still fresh. If nothing else is left to
 space it out with, it is asked again early rather than ending the session on a

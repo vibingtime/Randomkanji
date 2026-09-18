@@ -10,9 +10,9 @@
 // removing a step is the whole change; the box cap follows the array length.
 const INTERVALS = [0, 1, 3, 7, 21, 60, 180];
 const DEFAULT_NEW_PER_DAY = 10;
-// Other cards that must pass before a lapsed card is asked again, so the answer
-// is off the screen and out of mind by the time it returns.
-const RELEARN_GAP = 3;
+// Default cards that must pass before a lapsed card is asked again, so the
+// answer is off the screen and out of mind by the time it returns.
+const DEFAULT_AGAIN_AFTER = 3;
 const STORE_KEY = 'rk.v1';
 
 const el = {
@@ -35,6 +35,9 @@ const el = {
   verdictGot: document.getElementById('verdict-got'),
   swipeHint: document.getElementById('swipe-hint'),
   gradeMode: document.getElementById('grade-mode'),
+  againRule: document.getElementById('again-rule'),
+  againAfterInput: document.getElementById('again-after'),
+  againNote: document.getElementById('again-note'),
   srReveal: document.getElementById('sr-reveal'),
   srAgain: document.getElementById('sr-again'),
   srGot: document.getElementById('sr-got'),
@@ -75,6 +78,10 @@ function blankState() {
     showEn: true,
     // 'swipe' | 'buttons' | 'both'
     grading: 'swipe',
+    againAfter: DEFAULT_AGAIN_AFTER,
+    // Where a lapsed card resumes once answered correctly again:
+    // 'start' | 'two' | 'one' boxes below where it had reached.
+    againDrop: 'start',
   };
 }
 
@@ -90,6 +97,10 @@ function load() {
   state.newPerDay = Number.isFinite(state.newPerDay) ? state.newPerDay : DEFAULT_NEW_PER_DAY;
   state.showEn = state.showEn !== false;
   state.grading = ['swipe', 'buttons', 'both'].includes(state.grading) ? state.grading : 'swipe';
+  state.againAfter = Number.isFinite(state.againAfter)
+    ? Math.min(Math.max(1, Math.round(state.againAfter)), 20)
+    : DEFAULT_AGAIN_AFTER;
+  state.againDrop = ['start', 'two', 'one'].includes(state.againDrop) ? state.againDrop : 'start';
   applyGrading();
 
   if (state.day !== today()) {
@@ -124,6 +135,10 @@ function buildQueue() {
   }
   // Reviews are random; only the introduction of new cards follows the deck order.
   return shuffle(due);
+}
+
+function againAfter() {
+  return state.againAfter;
 }
 
 function swipeEnabled() {
@@ -279,19 +294,33 @@ function grade(known) {
   if (current === null || !revealed) return;
 
   const literal = kanji[current];
-  const box = known ? Math.min((state.box[literal]?.[0] ?? 1) + 1, INTERVALS.length) : 1;
-  state.box[literal] = [box, today() + INTERVALS[box - 1]];
+  // A third slot remembers how far the card had climbed before it lapsed.
+  // Saves written before it existed simply have nothing there.
+  const [prevBox = 1, , lapsedFrom] = state.box[literal] ?? [];
+  let box;
+  let carry;
+
+  if (!known) {
+    // Always back to box 1, so the card is re-drilled in this session whatever
+    // the resume rule says. Keep any height it had, for that rule to use.
+    box = 1;
+    carry = lapsedFrom ?? (prevBox > 1 ? prevBox : undefined);
+  } else if (lapsedFrom && state.againDrop !== 'start') {
+    const drop = state.againDrop === 'two' ? 2 : 1;
+    box = Math.min(Math.max(2, lapsedFrom - drop), INTERVALS.length);
+  } else {
+    box = Math.min(prevBox + 1, INTERVALS.length);
+  }
+
+  const due = today() + INTERVALS[box - 1];
+  state.box[literal] = carry === undefined ? [box, due] : [box, due, carry];
   save();
 
-  // Box 1 means "again this session". Space it by counting cards actually
-  // served rather than by position in the queue: the queue is empty whenever
-  // new cards are being introduced, which used to put the card straight back
-  // on screen with its answer still fresh.
+  // Space the re-drill by counting cards actually served rather than by
+  // position in the queue: the queue is empty whenever new cards are being
+  // introduced, which used to put the card straight back on screen.
   if (box === 1) {
-    relearn.push({
-      index: current,
-      showAfter: shown + RELEARN_GAP + Math.floor(Math.random() * 3),
-    });
+    relearn.push({ index: current, showAfter: shown + againAfter() });
   }
   advance();
 }
@@ -459,6 +488,22 @@ function describeSettings() {
   return `${left.toLocaleString()} kanji left to introduce — about ${days.toLocaleString()} ${days === 1 ? 'day' : 'days'} at this rate.`;
 }
 
+function describeAgain() {
+  const n = againAfter();
+  const gap = `${n} ${n === 1 ? 'card' : 'cards'}`;
+  const top = INTERVALS[INTERVALS.length - 1];
+  if (state.againDrop === 'start') {
+    return `A lapsed card is re-asked after ${gap}, then starts from day one — ` +
+      `${INTERVALS.length - 1} correct answers to climb back to ${top} days.`;
+  }
+  const drop = state.againDrop === 'two' ? 2 : 1;
+  const resume = INTERVALS[Math.max(2, INTERVALS.length - drop) - 1];
+  return `A lapsed card is re-asked after ${gap} either way. Once you get it right ` +
+    `it resumes at ${resume} days instead of starting over, so a card at ${top} days ` +
+    `costs far less to recover — but one you keep forgetting is pushed back out ` +
+    `rather than properly relearned.`;
+}
+
 function syncSettingsUI() {
   const unlimited = state.newPerDay === 0;
   el.noLimit.checked = unlimited;
@@ -468,6 +513,11 @@ function syncSettingsUI() {
   else if (!el.newPerDay.value) el.newPerDay.value = String(DEFAULT_NEW_PER_DAY);
   el.showEn.checked = state.showEn;
   for (const r of el.gradeMode.querySelectorAll('input')) r.checked = r.value === state.grading;
+  el.againAfterInput.value = String(state.againAfter);
+  for (const r of el.againRule.querySelectorAll('input[type="radio"]')) {
+    r.checked = r.value === state.againDrop;
+  }
+  el.againNote.textContent = describeAgain();
   el.note.textContent = describeSettings();
 }
 
@@ -512,6 +562,18 @@ el.gradeMode.addEventListener('change', (e) => {
   applyGrading();
   save();
   if (current !== null) render();
+});
+
+el.againRule.addEventListener('change', (e) => {
+  const t = e.target;
+  if (!(t instanceof HTMLInputElement)) return;
+  if (t.type === 'radio' && t.checked) state.againDrop = t.value;
+  if (t === el.againAfterInput) {
+    const n = Math.round(Number(el.againAfterInput.value));
+    state.againAfter = Number.isFinite(n) && n >= 1 ? Math.min(n, 20) : DEFAULT_AGAIN_AFTER;
+  }
+  save();
+  syncSettingsUI();
 });
 
 el.showEn.addEventListener('change', () => {

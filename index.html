@@ -91,6 +91,27 @@
       </label>
     </fieldset>
 
+    <fieldset id="again-rule">
+      <legend>After &ldquo;Again&rdquo;</legend>
+      <div class="field">
+        <label for="again-after">Cards until it comes back</label>
+        <input id="again-after" type="number" min="1" max="20" step="1" inputmode="numeric">
+      </div>
+      <label class="check">
+        <input type="radio" name="again-drop" value="start">
+        <span>Then start it over from day one</span>
+      </label>
+      <label class="check">
+        <input type="radio" name="again-drop" value="two">
+        <span>Then resume two boxes below where it was</span>
+      </label>
+      <label class="check">
+        <input type="radio" name="again-drop" value="one">
+        <span>Then resume one box below where it was</span>
+      </label>
+      <p id="again-note"></p>
+    </fieldset>
+
     <details id="tutorial">
       <summary>How it works</summary>
       <ol>
