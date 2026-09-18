@@ -97,17 +97,21 @@
         <label for="again-after">Cards until it comes back</label>
         <input id="again-after" type="number" min="1" max="20" step="1" inputmode="numeric">
       </div>
+      <p class="sub">Once you get it right again&hellip;</p>
       <label class="check">
         <input type="radio" name="again-drop" value="start">
-        <span>Then start it over from day one</span>
+        <span><b>Start it from scratch.</b> Treated like a kanji you have never
+          seen: back tomorrow, then in 3 days, a week, and so on.</span>
       </label>
       <label class="check">
         <input type="radio" name="again-drop" value="two">
-        <span>Then resume two boxes below where it was</span>
+        <span><b>Keep some of its progress.</b> One you had known for months
+          comes back in about 3 weeks instead of tomorrow.</span>
       </label>
       <label class="check">
         <input type="radio" name="again-drop" value="one">
-        <span>Then resume one box below where it was</span>
+        <span><b>Keep most of its progress.</b> One you had known for months
+          comes back in about 2 months instead of tomorrow.</span>
       </label>
       <p id="again-note"></p>
     </fieldset>
@@ -123,10 +127,10 @@
           <b>Got it</b> if you could.</li>
         <li>Small kana appear above the kanji you have not been taught yet, and
           always above the one being tested. They thin out as you progress.</li>
-        <li><b>Got it</b> moves a card up a box, so it returns after 1 day, then
-          3, 7, 21, 60 and 180. <b>Again</b> sends it back to the start and
-          shows it again this session.</li>
-        <li>Ten new kanji a day to begin with; reviews are never capped. There
+        <li>Each <b>Got it</b> stretches the gap before you see that kanji
+          again: 1 day, then 3, then a week, 3 weeks, 2 months, 6 months.
+          <b>Again</b> shortens it right back and re-asks you this session.</li>
+        <li>Twenty new kanji a day to begin with; reviews are never capped. There
           are 2136 in all — every kanji taught in Japanese schools.</li>
       </ol>
       <p>Progress is saved on this device only. It is never uploaded, and it

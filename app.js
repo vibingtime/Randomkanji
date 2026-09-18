@@ -9,10 +9,10 @@
 // 2136/180 = 12 reviews a day, where a 21-day top box would cost 102. Adding or
 // removing a step is the whole change; the box cap follows the array length.
 const INTERVALS = [0, 1, 3, 7, 21, 60, 180];
-const DEFAULT_NEW_PER_DAY = 10;
+const DEFAULT_NEW_PER_DAY = 20;
 // Default cards that must pass before a lapsed card is asked again, so the
 // answer is off the screen and out of mind by the time it returns.
-const DEFAULT_AGAIN_AFTER = 3;
+const DEFAULT_AGAIN_AFTER = 5;
 const STORE_KEY = 'rk.v1';
 
 const el = {
@@ -488,20 +488,38 @@ function describeSettings() {
   return `${left.toLocaleString()} kanji left to introduce — about ${days.toLocaleString()} ${days === 1 ? 'day' : 'days'} at this rate.`;
 }
 
+// How long, and how many correct answers, to get a kanji back to the longest
+// gap once it resumes at `fromBox`. The +1 is the answer given in the session.
+function recovery(fromBox) {
+  let days = 0;
+  let reps = 1;
+  for (let b = fromBox; b < INTERVALS.length; b++) {
+    days += INTERVALS[b - 1];
+    reps++;
+  }
+  return { days, reps };
+}
+
 function describeAgain() {
   const n = againAfter();
   const gap = `${n} ${n === 1 ? 'card' : 'cards'}`;
   const top = INTERVALS[INTERVALS.length - 1];
+
   if (state.againDrop === 'start') {
-    return `A lapsed card is re-asked after ${gap}, then starts from day one — ` +
-      `${INTERVALS.length - 1} correct answers to climb back to ${top} days.`;
+    const r = recovery(2);
+    return `A kanji you miss comes back after ${gap}, then starts over as if it ` +
+      `were new — ${r.reps} correct answers across ${r.days} days before it is ` +
+      `back to a ${top}-day gap.`;
   }
+
   const drop = state.againDrop === 'two' ? 2 : 1;
-  const resume = INTERVALS[Math.max(2, INTERVALS.length - drop) - 1];
-  return `A lapsed card is re-asked after ${gap} either way. Once you get it right ` +
-    `it resumes at ${resume} days instead of starting over, so a card at ${top} days ` +
-    `costs far less to recover — but one you keep forgetting is pushed back out ` +
-    `rather than properly relearned.`;
+  const resume = Math.max(2, INTERVALS.length - drop);
+  const r = recovery(resume);
+  return `A kanji you miss comes back after ${gap} either way. Once you get it ` +
+    `right, one you had known for ${top} days returns in ${INTERVALS[resume - 1]} ` +
+    `days rather than tomorrow — ${r.reps} correct answers across ${r.days} days ` +
+    `to fully recover. Less to redo, but a kanji you keep forgetting drifts ` +
+    `further out instead of being drilled.`;
 }
 
 function syncSettingsUI() {

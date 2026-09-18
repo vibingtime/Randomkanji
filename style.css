@@ -406,6 +406,14 @@ button:active { transform: translateY(1px); }
 
 #again-rule .field { margin-bottom: 0.9rem; }
 
+.sub {
+  margin: 0 0 0.7rem;
+  font-size: 0.8125rem;
+  color: var(--dim);
+}
+
+.check b { font-weight: 600; }
+
 #again-note {
   margin: 0.2rem 0 0;
   color: var(--dim);
