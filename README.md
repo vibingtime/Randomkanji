@@ -78,6 +78,10 @@ review backlog that creates is real, and no interval table softens it.
 
 **Show the English translation** — on by default, per-sentence.
 
+**Show the meaning of the tested word** — on by default. Turning this off
+alongside the translation and the readings leaves a card with nothing on it but
+the kanji, the sentence and its furigana: no English at all.
+
 **Show the on'yomi and kun'yomi** — on by default. Every reading KANJIDIC2 has
 for the kanji itself, under the example, with the okurigana dimmed so the part
 belonging to the kanji stands out. 生 has twenty of them, which is why the card

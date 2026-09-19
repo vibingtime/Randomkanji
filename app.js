@@ -28,6 +28,7 @@ const el = {
   kunRow: document.getElementById('kun-row'),
   on: document.getElementById('on'),
   kun: document.getElementById('kun'),
+  showGloss: document.getElementById('show-gloss'),
   showReadings: document.getElementById('show-readings'),
   settings: document.getElementById('settings'),
   openSettings: document.getElementById('open-settings'),
@@ -87,6 +88,7 @@ function blankState() {
     // 0 means no daily limit.
     newPerDay: DEFAULT_NEW_PER_DAY,
     showEn: true,
+    showGloss: true,
     showReadings: true,
     // 'swipe' | 'buttons' | 'both'
     grading: 'swipe',
@@ -108,6 +110,7 @@ function load() {
   // Saves written before these settings existed simply take the defaults.
   state.newPerDay = Number.isFinite(state.newPerDay) ? state.newPerDay : DEFAULT_NEW_PER_DAY;
   state.showEn = state.showEn !== false;
+  state.showGloss = state.showGloss !== false;
   state.showReadings = state.showReadings !== false;
   state.grading = ['swipe', 'buttons', 'both'].includes(state.grading) ? state.grading : 'swipe';
   state.againAfter = Number.isFinite(state.againAfter)
@@ -270,7 +273,7 @@ function renderSentence(target) {
   }
 
   el.sentence.replaceChildren(out);
-  el.gloss.textContent = gloss;
+  el.gloss.textContent = state.showGloss ? gloss : '';
   // Word-only cards carry no sentence, so there is nothing to translate.
   el.translation.textContent = state.showEn ? translation : '';
 
@@ -580,6 +583,7 @@ function syncSettingsUI() {
   if (!unlimited) el.newPerDay.value = String(state.newPerDay);
   else if (!el.newPerDay.value) el.newPerDay.value = String(DEFAULT_NEW_PER_DAY);
   el.showEn.checked = state.showEn;
+  el.showGloss.checked = state.showGloss;
   el.showReadings.checked = state.showReadings;
   for (const r of el.gradeMode.querySelectorAll('input')) r.checked = r.value === state.grading;
   el.againAfterInput.value = String(state.againAfter);
@@ -680,6 +684,12 @@ el.againRule.addEventListener('change', (e) => {
 
 el.showEn.addEventListener('change', () => {
   state.showEn = el.showEn.checked;
+  save();
+  if (current !== null && revealed) render();
+});
+
+el.showGloss.addEventListener('change', () => {
+  state.showGloss = el.showGloss.checked;
   save();
   if (current !== null && revealed) render();
 });

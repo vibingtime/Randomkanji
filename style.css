@@ -137,6 +137,8 @@ rt {
 
 #translation:empty { display: none; }
 
+#gloss:empty { display: none; }
+
 /* What the underlined word means - the answer to the card, so it reads
    brighter than the translation above it. */
 #gloss {
