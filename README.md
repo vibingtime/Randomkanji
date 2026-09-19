@@ -78,7 +78,7 @@ review backlog that creates is real, and no interval table softens it.
 
 **Show the English translation** — on by default, per-sentence.
 
-**Show the meaning of the tested word** — on by default. Turning this off
+**Show the meaning of the underlined word** — on by default. Turning this off
 alongside the translation and the readings leaves a card with nothing on it but
 the kanji, the sentence and its furigana: no English at all.
 
