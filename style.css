@@ -342,8 +342,11 @@ button:active { transform: translateY(1px); }
   border: 0;
   border-radius: 50%;
   background: none;
-  color: var(--dim);
-  opacity: 0.65;
+  /* Was --dim at 0.65, which blends to 2.1:1 against the page - under the 3:1
+     WCAG floor for a control, and on a laptop it sits ~800px from the card
+     where the eye never goes. This reads 4:1 light and 5.4:1 dark. */
+  color: var(--fg);
+  opacity: 0.55;
   z-index: 2;
 }
 
