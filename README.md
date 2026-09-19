@@ -120,6 +120,13 @@ instead of being properly relearned.
 **How it works** — a collapsed tutorial covering the loop, the furigana rule,
 the boxes and where progress is kept.
 
+**About & sources** — opens a separate screen carrying the attribution. This is
+a licence requirement rather than a nicety: EDRDG's terms state that for a
+phone or tablet app the acknowledgement must sit on its own screen reached from
+a menu, and that naming it on a launch screen is not sufficient. It also shows
+which build is running, read from the service worker's cache name so the two
+cannot drift apart.
+
 All of these live in the same `localStorage` record as your progress, so they
 survive reloads and reinstalls but do not sync between devices. Defaults apply
 only where nothing is stored yet — an existing install keeps what it has.

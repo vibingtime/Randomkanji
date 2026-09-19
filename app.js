@@ -36,6 +36,10 @@ const el = {
   noLimit: document.getElementById('no-limit'),
   showEn: document.getElementById('show-en'),
   note: document.getElementById('settings-note'),
+  about: document.getElementById('about'),
+  openAbout: document.getElementById('open-about'),
+  closeAbout: document.getElementById('close-about'),
+  build: document.getElementById('build'),
   verdicts: document.getElementById('verdicts'),
   verdictAgain: document.getElementById('verdict-again'),
   verdictGot: document.getElementById('verdict-got'),
@@ -498,6 +502,14 @@ function ownsKeys(node) {
 }
 
 document.addEventListener('keydown', (e) => {
+  // Innermost dialog first: About sits above Settings.
+  if (!el.about.hidden) {
+    if (e.key === 'Escape') {
+      el.about.hidden = true;
+      el.openAbout.focus();
+    }
+    return;
+  }
   if (!el.settings.hidden) {
     if (e.key === 'Escape') closeSettings();
     return;
@@ -599,6 +611,32 @@ function readNewPerDay() {
   const n = Math.round(Number(el.newPerDay.value));
   return Number.isFinite(n) && n >= 1 ? Math.min(n, cards.length) : DEFAULT_NEW_PER_DAY;
 }
+
+// The build is whatever the service worker has cached, read live rather than
+// duplicated here, so the two cannot drift apart.
+async function showBuild() {
+  try {
+    const [name] = await caches.keys();
+    el.build.textContent = name ? `Build ${name}` : '';
+  } catch {
+    el.build.textContent = '';
+  }
+}
+
+el.openAbout.addEventListener('click', () => {
+  showBuild();
+  el.about.hidden = false;
+  el.closeAbout.focus();
+});
+
+el.closeAbout.addEventListener('click', () => {
+  el.about.hidden = true;
+  el.openAbout.focus();
+});
+
+el.about.addEventListener('click', (e) => {
+  if (e.target === el.about) el.about.hidden = true;
+});
 
 el.openSettings.addEventListener('click', openSettings);
 el.closeSettings.addEventListener('click', closeSettings);
